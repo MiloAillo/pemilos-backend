@@ -126,7 +126,7 @@ export const voterGetResult = async (label: string) => {
   }
 };
 
-// Will be implemented later. When the pusher is ready.
+// Result is empty, only trigger frontend to fetch another API for the voting count
 export const voterPushLiveCount = debounce(async () => {
   const result = ""
 
