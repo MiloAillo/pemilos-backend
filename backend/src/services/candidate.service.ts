@@ -11,6 +11,8 @@ export const candidateInsert = async (req: PostCandidateCreate) => {
      try {
           const result = await Candidate.insertOne(req)
 
+          await getRedisClient().hdel("setting", "candidates")
+
           return result
      } catch (err) {
           throw err
@@ -51,6 +53,8 @@ export const deleteCandidateById = async (id: string) => {
           await Candidate.deleteOne({
                _id: id
           })
+
+          await getRedisClient().hdel("setting", "candidates")
      } catch (err) {
           throw err
      }

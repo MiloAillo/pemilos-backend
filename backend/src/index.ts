@@ -26,7 +26,7 @@ app.use(cors({
 app.use(cookieParser())
 app.use(express.json())
 
-// app.use(rateLimitMiddleware);
+app.use(rateLimitMiddleware);
 app.use(express.json());
 app.use("/api/v1/", v1Route);
 app.use(errorHandler);

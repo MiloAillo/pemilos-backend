@@ -1,29 +1,29 @@
 services:
-  frontend:
-    build:
-      context: ./pemilos-frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3001:3000"
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
-      - VITE_PUSHER_APPID=${VITE_PUSHER_APPID}
-      - VITE_PUSHER_KEY=${VITE_PUSHER_KEY}
-      - VITE_PUSHER_SECRET=${VITE_PUSHER_SECRET}
-      - VITE_PUSHER_CLUSTER=${VITE_PUSHER_CLUSTER}
-    env_file:
-      - .env
-    networks:
-      - pemilos_network
-    depends_on:
-      - app
+  # frontend:
+  #   build:
+  #     context: ./pemilos-frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - VITE_API_URL=${VITE_API_URL}
+  #     - VITE_PUSHER_APPID=${VITE_PUSHER_APPID}
+  #     - VITE_PUSHER_KEY=${VITE_PUSHER_KEY}
+  #     - VITE_PUSHER_SECRET=${VITE_PUSHER_SECRET}
+  #     - VITE_PUSHER_CLUSTER=${VITE_PUSHER_CLUSTER}
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - pemilos_network
+  #   depends_on:
+  #     - app
 
   app:
     build:
-      context: ./backend
-      dockerfile: ./Dockerfile.backend
+      context: .
+      dockerfile: ./backend/Dockerfile.backend
     ports:
-      - "5000:5000"
+      - "5000:8000"
     environment:
       - APP_PORT=${APP_PORT}
       - NODE_ENV=${NODE_ENV}

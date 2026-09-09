@@ -7,3 +7,4 @@ mongodb_data/
 pemilos-local/
 .idea
 **/logs/
+/config/mongo/init.js

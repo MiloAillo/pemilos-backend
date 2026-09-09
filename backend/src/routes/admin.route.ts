@@ -47,7 +47,7 @@ function getUpload(): multer.Multer {
 }
 
 router.get("/vote/status", getVoteStatus);
-// router.use(adminMiddleware);
+router.use(adminMiddleware);
 router.post("/upload/csv", getUpload().single("file"), uploadVoterFromCsv);
 router.post(
   "/upload/csv/token",
