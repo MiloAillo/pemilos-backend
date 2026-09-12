@@ -33,4 +33,7 @@ const voteSchema = new Schema({
      }
 })
 
+// Compound unique index to prevent duplicate votes per user per label
+voteSchema.index({ user: 1, label: 1 }, { unique: true })
+
 export const Vote = model("Vote", voteSchema)

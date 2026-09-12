@@ -116,14 +116,15 @@ export const vote = asyncHandler(async (req, res) => {
 export const resetVote = asyncHandler(async (req, res) => {
   // Take the payload
   const { username } = req.body;
+  const { id } = getPayload(req);
 
-  // calls the service
-  await voterResetVote(username);
+  // calls the service with adminId
+  await voterResetVote(username, id);
 
-  res.status(200).json({
-    status: "sucess",
-    message: "user vote status resetted",
-  });
+    res.status(200).json({
+      status: "success",
+      message: "user vote status resetted",
+    });
 });
 
 // This controller will count and return how much voter that voted, and nah.

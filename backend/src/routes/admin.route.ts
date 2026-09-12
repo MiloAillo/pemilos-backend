@@ -8,6 +8,7 @@ import {
   uploadVoterFromCsv,
 } from "../controllers/voter.controller";
 import path from "path";
+import { authMiddleware } from "../middlewares/auth.middleware";
 import { adminMiddleware } from "../middlewares/admin.middleware";
 import { validateDTO } from "../middlewares/validate.middleware";
 import { getUser, postUserCreate } from "../dtos/user.dto";
@@ -35,18 +36,41 @@ const router = Router();
 function getUpload(): multer.Multer {
   const nodeEnv = process.env.NODE_ENV ?? "dev";
 
-  if (nodeEnv == "dev") {
-    return multer({
-      dest: path.resolve(__dirname, "..", "..", "uploads"),
-    });
-  } else {
-    return multer({
-      dest: path.resolve("/app/uploads"),
-    });
-  }
+  const uploadPath = nodeEnv == "dev" 
+    ? path.resolve(__dirname, "..", "..", "uploads")
+    : path.resolve("/app/uploads");
+
+  return multer({
+    dest: uploadPath,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit for large CSV files
+    },
+    fileFilter: (req, file, cb) => {
+      // MIME type validation
+      const allowedMimeTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain'];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return cb(new Error('Invalid file type. Only CSV files are allowed.'));
+      }
+
+      // Extension validation
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (ext !== '.csv') {
+        return cb(new Error('Invalid file extension. Only .csv files are allowed.'));
+      }
+
+      // Path traversal protection - sanitize filename
+      const basename = path.basename(file.originalname);
+      if (basename !== file.originalname || basename.includes('..')) {
+        return cb(new Error('Invalid filename detected.'));
+      }
+
+      cb(null, true);
+    },
+  });
 }
 
 router.get("/vote/status", getVoteStatus);
+router.use(authMiddleware);
 router.use(adminMiddleware);
 router.post("/upload/csv", getUpload().single("file"), uploadVoterFromCsv);
 router.post(

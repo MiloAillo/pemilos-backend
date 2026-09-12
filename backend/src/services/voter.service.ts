@@ -27,8 +27,8 @@ export const voterSaveVote = async (req: PostInsertVote, userId: string) => {
   let lock: any;
 
   try {
-    // Acquire lock
-    lock = await redlock.acquire([lockName], 10000);
+    // Acquire lock with increased timeout for better reliability
+    lock = await redlock.acquire([lockName], 30000);
 
     const rawData = await getRedisClient().hget("setting", "isVotingAllowed");
     if (rawData !== "true") {
@@ -136,8 +136,14 @@ export const voterPushLiveCount = debounce(async () => {
   return;
 }, 3000);
 
-export const voterResetVote = async (username: string) => {
+export const voterResetVote = async (username: string, adminId: string) => {
   try {
+    // Verify admin role
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== "admin") {
+      throw createError("unauthorized", "only admins can reset votes", 403);
+    }
+
     const user = await User.findOneAndUpdate(
       {
         username: username,
@@ -156,6 +162,9 @@ export const voterResetVote = async (username: string) => {
     await Vote.deleteMany({
       user: user._id,
     });
+
+    // Audit logging
+    fileLogger.info(`Admin ${admin.username} (${adminId}) reset vote for user ${username} (${user._id})`);
   } catch (err) {
     throw err;
   }

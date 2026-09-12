@@ -17,7 +17,10 @@ export const generateToken = (userId: string, role: string, expiresIn: number) =
 export const verifyToken = (token: string) => {
      const JWT_KEY: string = String(process.env.JWT_KEY)
      try {
-          return jwt.verify(token, JWT_KEY)
+          return jwt.verify(token, JWT_KEY, {
+               algorithms: ["HS256"],
+               issuer: "pemilos-backend"
+          })
      } catch (error) {
           return false
      }
@@ -33,14 +36,25 @@ export const getPayload = (req: Request) => {
           )
      }
 
-     const decoded = jwt.decode(token) as Payload
-     if (!decoded) {
+     const JWT_KEY: string = String(process.env.JWT_KEY)
+     try {
+          const decoded = jwt.verify(token, JWT_KEY, {
+               algorithms: ["HS256"],
+               issuer: "pemilos-backend"
+          }) as Payload
+          return decoded
+     } catch (error) {
+          if (error instanceof jwt.TokenExpiredError) {
+               throw createError(
+                    "unauthorized",
+                    "token expired",
+                    401
+               )
+          }
           throw createError(
-               "failed",
-               "internal server error",
-               500
+               "unauthorized",
+               "invalid token",
+               401
           )
      }
-
-     return decoded
 }

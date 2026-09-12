@@ -4,6 +4,11 @@ import { createError } from "../exceptions/error.exception";
 import { User } from "../models/user.model";
 import { logger } from "../utils/logger.util";
 
+// Helper function to sanitize regex input and prevent NoSQL injection
+const sanitizeRegex = (input: string): string => {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 export const userCreate = async (req: PostUserCreate) => {
   try {
     const user = await User.insertOne(req);
@@ -33,9 +38,9 @@ export const userGetAll = async (req: GetUser) => {
     // make a query class so that class field can dynamically defined or not
     const query: any = {
       role: req.role,
-      // Do not give any sweats on ts, it just a basic LIKE keyword
+      // Sanitize regex input to prevent NoSQL injection
       name: {
-        $regex: req.name,
+        $regex: sanitizeRegex(req.name),
         $options: "i",
       },
     };

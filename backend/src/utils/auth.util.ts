@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export const generatePassword = (username: string) => {
      // Password akan menyesuaikan kemauan osis.
      const randString = makeid(6)
@@ -7,11 +9,16 @@ export const generatePassword = (username: string) => {
 }
 
 export function makeid(length: number) {
-    var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var charactersLength = characters.length;
-    for ( var i = 0; i < length; i++ ) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    let result = '';
+    
+    // Use crypto.randomBytes for secure random generation
+    const randomBytes = crypto.randomBytes(length);
+    
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(randomBytes[i] % charactersLength);
     }
+    
     return result;
 }
