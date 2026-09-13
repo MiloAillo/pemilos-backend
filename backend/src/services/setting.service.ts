@@ -1,6 +1,8 @@
 import { x } from "joi";
 import { getRedisClient } from "../configs/redis.config"
 import { Settings } from "../utils/types.util";
+import { getPusherClient } from "../configs/pusher.config";
+import { debounce } from "lodash";
 
 export const settingToggleAllowVote = async () => {
      try {
@@ -14,6 +16,10 @@ export const settingToggleAllowVote = async () => {
           } else {
                await redis.hset("setting", "isVotingAllowed", "true")
           }
+
+          // trigger pusher
+          const pusher = await getPusherClient();
+          pusher.trigger("pemilose", "pemilolot", "");
           
      } catch (err) {
           throw err
