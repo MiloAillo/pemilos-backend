@@ -9,7 +9,7 @@
 
 ## 📋 EXECUTIVE SUMMARY
 
-This comprehensive security audit identified **79 vulnerabilities** across 10 architectural layers of the Pemilos backend system. The findings reveal critical security flaws that could compromise election integrity, user data, and system availability.
+This comprehensive security audit identified **78 vulnerabilities** across 10 architectural layers of the Pemilos backend system. The findings reveal critical security flaws that could compromise election integrity, user data, and system availability.
 
 **Note:** Plain text password storage and password exposure in API responses have been excluded from this audit as they are part of the system's design requirements.
 
@@ -19,7 +19,7 @@ This comprehensive security audit identified **79 vulnerabilities** across 10 ar
 |----------|-------|-------|-----------|--------|
 | 🚨 **CRITICAL** | 11 | 11 | 0 | ✅ **COMPLETED** |
 | 🔴 **HIGH** | 23 | 23 | 0 | ✅ **COMPLETED** |
-| 🟡 **MEDIUM** | 30 | 0 | 30 | ⏳ **PENDING** |
+| 🟡 **MEDIUM** | 29 | 0 | 29 | ⏳ **PENDING** |
 | 🟢 **LOW** | 15 | 0 | 15 | ⏳ **PENDING** |
 
 **Note:** Plain text password storage and password exposure are excluded from this audit as they're part of system requirements.
@@ -36,7 +36,7 @@ This comprehensive security audit identified **79 vulnerabilities** across 10 ar
 - ✅ Path traversal attacks blocked
 - ✅ Admin authorization enforced on all routes
 - ✅ Password validation (min 8 chars + complexity)
-- ✅ Field name alignment (class/kelas consistency)
+- ✅ Field name partial alignment (class in PostUserCreate)
 - ✅ Cryptographically secure password generation (crypto.randomBytes)
 - ✅ Vote reset authorization enforced
 - ✅ Unique constraint on votes (database-level)
@@ -641,12 +641,12 @@ Security headers protect against common web vulnerabilities (OWASP recommendatio
 
 ### Layer 3: DTOs (4 files analyzed)
 
-#### **Finding 3.1: Field Name Mismatch**
+#### **Finding 3.1: Field Name Inconsistency**
 - **Severity:** CRITICAL
 - **Location:** `user.dto.ts:8,17`
-- **Issue:** TypeScript uses `class`, Joi validates `kelas`
-- **Impact:** Complete validation bypass
-- **Fix:** Align field names across interface and validation
+- **Issue:** Inconsistency between DTOs - PostUserCreate uses `class` field, GetUser uses `kelas` field. Creates API inconsistency between frontend field names for create vs read operations.
+- **Impact:** API inconsistency - frontend must use different field names for create and read operations
+- **Fix:** Align field names across DTOs for consistency
 
 #### **Finding 3.2: Weak Password Validation**
 - **Severity:** CRITICAL
@@ -687,11 +687,6 @@ password: joi.string()
 - **Severity:** MEDIUM
 - **Location:** `logger.util.ts:9-12`
 - **Fix:** Use atomic directory creation with try-catch
-
-#### **Finding 4.5: No Log Rotation**
-- **Severity:** MEDIUM
-- **Location:** `logger.util.ts:24`
-- **Fix:** Implement daily log rotation with size limits
 
 ### Layer 5: Middlewares (5 files analyzed)
 
@@ -1131,7 +1126,7 @@ After implementing fixes, verify each item:
 │                                                        │
 │  ┌───────────────────┐  ┌───────────────────┐         │
 │  │ 🟡 MEDIUM         │  │ 🟢 LOW            │         │
-│  │ (30 issues)       │  │ (15 issues)       │         │
+│  │ (29 issues)       │  │ (15 issues)       │         │
 │  │                   │  │                   │         │
 │  │ ⏳ PENDING        │  │ ⏳ PENDING        │         │
 │  │                   │  │                   │         │
