@@ -16,6 +16,19 @@ import { asyncHandler } from "../middlewares/async_handler.middleware";
 import { PostInsertVote } from "../dtos/vote.dto";
 import { getPayload } from "../utils/jwt.util";
 
+const sanitizeCSVField = (field: string): string => {
+  if (!field) return field;
+  
+  const fieldStr = String(field);
+  const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+  
+  if (dangerousChars.some(char => fieldStr.startsWith(char))) {
+    return `'${fieldStr}`;
+  }
+  
+  return fieldStr;
+};
+
 export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
   const voters: Voter[] = [];
 
@@ -35,9 +48,9 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
       .on("data", (data) => {
         console.log(data)
         voters.push({
-          name: data.NAME,
-          username: data.USERNAME,
-          class: data.CLASS,
+          name: sanitizeCSVField(data.NAME),
+          username: sanitizeCSVField(data.USERNAME),
+          class: sanitizeCSVField(data.CLASS),
           password: generatePassword(data.USERNAME),
           isVoted: false,
         });
@@ -71,10 +84,10 @@ export const exportTokenizedVoterFromCSV = asyncHandler(async (req, res) => {
       .pipe(csv())
       .on("data", (data) => {
         voters.push({
-          name: data.NAMA,
-          username: data.USERNAME,
-          class: data.KELAS,
-          password: data.TOKEN,
+          name: sanitizeCSVField(data.NAMA),
+          username: sanitizeCSVField(data.USERNAME),
+          class: sanitizeCSVField(data.KELAS),
+          password: sanitizeCSVField(data.TOKEN),
           isVoted: false,
         });
       })

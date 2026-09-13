@@ -16,7 +16,7 @@ export const getRedisClient = () => {
     redis = new Redis(
       {
         host: HOST,
-        port: parseInt(PORT),
+        port: parseInt(PORT, 10) || 6379,
         password: PASSWORD,
         username: USERNAME
       }  

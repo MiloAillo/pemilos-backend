@@ -7,21 +7,30 @@ export const validateDTO = (schema: ObjectSchema) => {
         const result = schema.validate(req.body, { abortEarly: false });
 
         if (result.error) {
-            const errors = result.error.details.map(detail => ({
-                field: detail.path.join('.'),
-                message: detail.message,
-                type: detail.type,
-                limit: detail.context?.limit
-            }))
-            res.status(400).json({
-                status: "error",
-                message: "Failed on validation",
-                error: errors
-            });
-            logger.debug("Validation Fails")
-            return
+            const isProduction = process.env.NODE_ENV === 'production';
+            
+            if (isProduction) {
+                res.status(400).json({
+                    status: "error",
+                    message: "Validation failed. Please check your input.",
+                    errorCount: result.error.details.length
+                });
+            } else {
+                const errors = result.error.details.map(detail => ({
+                    field: detail.path.join('.'),
+                    message: detail.message
+                }));
+                res.status(400).json({
+                    status: "error",
+                    message: "Failed on validation",
+                    errors: errors
+                });
+            }
+            
+            logger.debug("Validation Fails");
+            return;
         }
-        logger.debug("validation Success")
+        logger.debug("validation Success");
 
         next();
     };

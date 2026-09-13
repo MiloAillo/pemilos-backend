@@ -5,7 +5,7 @@ export type AppError = {
     statusCode: number;
 };
 
-export const isAppError = (error: any): error is AppError => {
+export const isAppError = (error: unknown): error is AppError => {
     return (
         typeof error === "object" &&
         error !== null &&
@@ -15,6 +15,6 @@ export const isAppError = (error: any): error is AppError => {
     );
 };
 
-export const createError = (status: string, message: string, statusCode: number, error?: any): AppError => {
-    return { status, message, error, statusCode, };
+export const createError = (status: string, message: string, statusCode: number, error?: unknown): AppError => {
+    return { status, message, error: error as object, statusCode, };
 };

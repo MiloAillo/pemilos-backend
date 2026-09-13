@@ -9,8 +9,8 @@ export type PostInsertVote = {
 }
 
 export const postInsertVote: ObjectSchema = joi.object().keys({
-     osis: joi.number().required(),
-     mpk: joi.number().required()
+     osis: joi.number().integer().min(1).max(999).required(),
+     mpk: joi.number().integer().min(1).max(999).required()
 })
 
 export type DeleteResetVote = {
