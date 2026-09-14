@@ -40,8 +40,8 @@ export const userGetAll = async (req: GetUser) => {
       },
     };
 
-    if (req.isVoted) {
-      query.isVoted = true;
+    if (req.isVoted && (req.isVoted !== undefined || req.isVoted !== null)) {
+      query.isVoted = req.isVoted;
     }
 
     if (req.kelas) {
