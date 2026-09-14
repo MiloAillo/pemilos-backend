@@ -1,0 +1,1020 @@
+{
+	"info": {
+		"_postman_id": "4de3257c-c169-4f81-9c12-d714399721c9",
+		"name": "Pemilos-Backend",
+		"description": "Validation used by this project is JWT attached to an HttpOnly cookie.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "34415611"
+	},
+	"item": [
+		{
+			"name": "Import Voter From CSV",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "jwt",
+					"jwt": {
+						"algorithm": "HS256",
+						"isSecretBase64Encoded": false,
+						"payload": "{}",
+						"addTokenTo": "header",
+						"headerPrefix": "Bearer",
+						"queryParamKey": "token",
+						"header": "{}"
+					}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4iLCJpZCI6IjY4ZDE1ODg5OGZlMDYxMTYwZDMyYTAzYyIsImlhdCI6MTc1ODU5NzQzMSwiZXhwIjoxNzU4NjgzODMxLCJpc3MiOiJwZW1pbG9zLWJhY2tlbmQifQ.phmuX18emLOAlxOdYcPdtB_e3gO3zMCgiD1MzxhHSro",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/jirb/Videos/PEMILOS/GURU_STAFF.csv"
+						}
+					]
+				},
+				"url": "{{baseUrl}}/api/v1/admin/upload/csv",
+				"description": "Uplaod voter in form of csv files. The default role is vote. To make a more customizable user, please consider to use `Create User` endpoint.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Export Tokenized",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "jwt",
+					"jwt": {
+						"algorithm": "HS256",
+						"isSecretBase64Encoded": false,
+						"payload": "{}",
+						"addTokenTo": "header",
+						"headerPrefix": "Bearer",
+						"queryParamKey": "token",
+						"header": "{}"
+					}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4iLCJpZCI6IjY4ZDE1ODg5OGZlMDYxMTYwZDMyYTAzYyIsImlhdCI6MTc1ODU5NzQzMSwiZXhwIjoxNzU4NjgzODMxLCJpc3MiOiJwZW1pbG9zLWJhY2tlbmQifQ.phmuX18emLOAlxOdYcPdtB_e3gO3zMCgiD1MzxhHSro",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/jirb/Videos/BARU/STAFF.csv"
+						}
+					]
+				},
+				"url": "{{baseUrl}}/api/v1/admin/upload/csv/token",
+				"description": "Uplaod voter in form of csv files. The default role is vote. To make a more customizable user, please consider to use `Create User` endpoint.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"johnny\",\n\t\"password\": \"rancap:johnny\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/api/v1/auth/login",
+				"description": "Login, returns a `HttpOnly Cookie` that will be used for the next request.\n\n- `Validation: false`"
+			},
+			"response": []
+		},
+		{
+			"name": "CheckProfile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {
+						"token": "{{authToken}}"
+					}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/auth/me",
+				"description": "Check the user status, the id and the role. This endpoint will be used by frontend to validate whether the user logged in is a admin or not.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Logout",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/auth/logout",
+				"description": "Logout, clears the cookie.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Create User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"admim\",\n\t\"username\": \"admin\",\n\t\"password\": \"admin:admin\",\n\t\"class\": \"ADMIN\",\n\t\"role\": \"admin\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "http://localhost:5000/api/v1/admin/user",
+				"description": "Creates a user with so much control\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Create Candidate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Laily A. A\",\n\t\"label\": \"osis\",\n\t\"number\": 3,\n\t\"image\": \"Laily.png\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/api/v1/admin/candidate",
+				"description": "Create a candidate\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Check Candidate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true,
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"erlangga\",\n\t\"label\": \"mpk\",\n\t\"number\": 2,\n\t\"image\": \"anjaskelas.png\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/api/v1/candidate/",
+				"description": "Checks the available candidates.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Vote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"osis\": \"68cd1b05d71448421f3272cf\",\n\t\"mpk\": \"68cd1b0bd71448421f3272d1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/api/v1/vote/",
+				"description": "Vote, attach the candidate _ids\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Get All User",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/user?isVoted=true",
+					"protocol": "https",
+					"host": [
+						"be",
+						"hanoman",
+						"web",
+						"id"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"user"
+					],
+					"query": [
+						{
+							"key": "isVoted",
+							"value": "true"
+						}
+					]
+				},
+				"description": "Get all availabe user, there is also some query params available to use.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					}
+				],
+				"url": "http://localhost:5000/api/v1/admin/user",
+				"description": "Get all availabe user, there is also some query params available to use.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete candidate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/admin/candidate/68ceb144f3a67a0645505f38",
+				"description": "Get all availabe user, there is also some query params available to use.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Get User By ID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/user/685ca88fcec785a112aa32b6?name=FARIS&isVoted=true",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"user",
+						"685ca88fcec785a112aa32b6"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "FARIS"
+						},
+						{
+							"key": "isVoted",
+							"value": "true"
+						}
+					]
+				},
+				"description": "Get specific user by id.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Reset Vote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"10861\"\n}                                               ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "{{baseUrl}}/api/v1/admin/reset",
+				"description": "Reset the user's vote state\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Count voter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/admin/count",
+				"description": "Count the voter that already votes and vice versa.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Toggle Setting",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/admin/vote/status",
+				"description": "Count the voter that already votes and vice versa.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Setting Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/admin/vote/status?isVoted=",
+					"protocol": "https",
+					"host": [
+						"be",
+						"hanoman",
+						"web",
+						"id"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"vote",
+						"status"
+					],
+					"query": [
+						{
+							"key": "isVoted",
+							"value": ""
+						}
+					]
+				},
+				"description": "Count the voter that already votes and vice versa.\n\n- `Validation: true`"
+			},
+			"response": []
+		},
+		{
+			"name": "Get live count",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": true,
+				"disableUrlEncoding": false,
+				"disableCookies": false
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": {}
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "User-Agent",
+						"value": "insomnia/10.0.0"
+					},
+					{
+						"key": "Set-Cookie",
+						"value": "pemilostoken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiNjg0ZThkMTU3NjYzMzhjOTQ4ZGFmOGExIiwiaWQiOiJ2b3RlciIsImlhdCI6MTc1MDA4MTA5MiwibmJmIjoxNzUxODMxMTc0MDI3LCJleHAiOjE3NTAwODE5OTIsImlzcyI6InBlbWlsb3MtYmFja2VuZCJ9.xDDgTBmI5Ekcdsg-MF5S3dgonbm-iF-qHbEEvo0MjWc; Max-Age=60; Path=/api/v1; Expires=Mon, 16 Jun 2025 13:39:12 GMT;HttpOnly;Secure; SameSite=Strict",
+						"disabled": true
+					},
+					{
+						"key": "Authorization",
+						"value": "{{authToken}}",
+						"type": "text"
+					}
+				],
+				"url": "{{baseUrl}}/api/v1/admin/live/count",
+				"description": "Count the voter that already votes and vice versa.\n\n- `Validation: true`"
+			},
+			"response": []
+		}
+	]
+}

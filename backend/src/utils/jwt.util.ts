@@ -3,8 +3,18 @@ import jwt from "jsonwebtoken"
 import { createError } from "../exceptions/error.exception"
 import { Payload } from "./types.util"
 
+const validateJWTKey = (key: string | undefined): string => {
+     if (!key || key === 'undefined') {
+          throw new Error('JWT_KEY not defined in environment variables');
+     }
+     if (key.length < 32) {
+          throw new Error(`JWT_KEY must be at least 32 characters long (current: ${key.length})`);
+     }
+     return key;
+};
+
 export const generateToken = (userId: string, role: string, expiresIn: number) => {
-     const JWT_KEY: string = String(process.env.JWT_KEY)
+     const JWT_KEY = validateJWTKey(process.env.JWT_KEY)
      return jwt.sign({
           role: role,
           id: userId
@@ -15,7 +25,7 @@ export const generateToken = (userId: string, role: string, expiresIn: number) =
 }
 
 export const verifyToken = (token: string) => {
-     const JWT_KEY: string = String(process.env.JWT_KEY)
+     const JWT_KEY = validateJWTKey(process.env.JWT_KEY)
      try {
           return jwt.verify(token, JWT_KEY, {
                algorithms: ["HS256"],
@@ -36,7 +46,7 @@ export const getPayload = (req: Request) => {
           )
      }
 
-     const JWT_KEY: string = String(process.env.JWT_KEY)
+     const JWT_KEY = validateJWTKey(process.env.JWT_KEY)
      try {
           const decoded = jwt.verify(token, JWT_KEY, {
                algorithms: ["HS256"],

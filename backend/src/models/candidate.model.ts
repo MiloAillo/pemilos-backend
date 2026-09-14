@@ -16,6 +16,6 @@ const candidateSchema = new Schema({
           required: true,
      },
      image: String,
-})
+}, { timestamps: true })
 
 export const Candidate = model('Candidate', candidateSchema)

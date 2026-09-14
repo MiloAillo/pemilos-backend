@@ -22,7 +22,7 @@ export type GetUser = {
      name: string
      page: number,
      isVoted: boolean,
-     kelas?: string,
+     class?: string,
      role: "voter" | "admin"
 }
 
@@ -30,7 +30,7 @@ export const getUser: ObjectSchema = joi.object().keys({
      name: joi.string(),
      page: joi.number(),
      isVoted: joi.boolean(),
-     kelas: joi.string().valid(...CLASS).optional(),
+     class: joi.string().valid(...CLASS).optional(),
      role: joi.string()
 })
 

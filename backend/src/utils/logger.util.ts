@@ -7,8 +7,10 @@ export const logger = require("pino")()
 
 // Ensure logs directory exists
 const logDir = path.join(__dirname, "../../logs");
-if (!fs.existsSync(logDir)) {
+try {
   fs.mkdirSync(logDir, { recursive: true });
+} catch (err: any) {
+  if (err.code !== 'EEXIST') throw err;
 }
 
 export const fileLogger = winston.createLogger({

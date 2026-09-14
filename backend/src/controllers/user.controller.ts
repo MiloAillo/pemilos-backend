@@ -10,14 +10,14 @@ import { logger } from "../utils/logger.util";
 
 export const createUser = asyncHandler(async (req, res) => {
   // parse the json from payload
-  const { kelas, name, username, password, role } = req.body;
+  const { class: userClass, name, username, password, role } = req.body;
 
   // calls the service
   const user = await userCreate({
     name,
     username,
     password,
-    class: kelas,
+    class: userClass,
     role,
   } as PostUserCreate);
 
@@ -33,7 +33,7 @@ export const getAllUser = asyncHandler(async (req, res) => {
   const {
     page = 1,
     isVoted = false,
-    kelas,
+    class: userClass,
     role = "voter",
     name = "",
   } = req.query;
@@ -42,7 +42,7 @@ export const getAllUser = asyncHandler(async (req, res) => {
   const users = await userGetAll({
     page,
     isVoted,
-    kelas,
+    class: userClass,
     role,
     name,
   } as GetUser);

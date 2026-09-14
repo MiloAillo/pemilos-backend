@@ -12,26 +12,26 @@ When we cast the function .populate() to this model, this field will turn into t
 */
 
 const voteSchema = new Schema({
-     label: {
-          type: String,
-          required: true,
-          enum: LABEL,
-     },
+      label: {
+           type: String,
+           required: true,
+           enum: LABEL,
+      },
 
-     user: {
-          // The objectId type, the reason why it can be treated as an _id when saving a document.
-          type: Schema.Types.ObjectId,
-          // Fill the referred Model.
-          ref: "User",
-          required: true,
-     },
-     
-     candidate: {
-          type: Schema.Types.ObjectId,
-          ref: "Candidate",
-          required: true,
-     }
-})
+      user: {
+           // The objectId type, the reason why it can be treated as an _id when saving a document.
+           type: Schema.Types.ObjectId,
+           // Fill the referred Model.
+           ref: "User",
+           required: true,
+      },
+      
+      candidate: {
+           type: Schema.Types.ObjectId,
+           ref: "Candidate",
+           required: true,
+      }
+}, { timestamps: true })
 
 // Compound unique index to prevent duplicate votes per user per label
 voteSchema.index({ user: 1, label: 1 }, { unique: true })

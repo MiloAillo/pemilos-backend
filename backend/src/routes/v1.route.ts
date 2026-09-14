@@ -7,8 +7,8 @@ import { rateLimitMiddleware } from "../middlewares/rate-limit.middleware";
 
 const router = Router();
 
-router.use("/admin", adminRoute);
 router.use(rateLimitMiddleware);
+router.use("/admin", adminRoute);
 router.use("/auth", authRoute);
 router.use("/vote", voteRoute);
 router.use("/candidate", candidateRoute);

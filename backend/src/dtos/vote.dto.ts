@@ -4,13 +4,13 @@ import joi, { ObjectSchema } from "joi"
 // ex: Post(method)Insert(Action)Vote(Model)
 
 export type PostInsertVote = {
-     osis: number,
-     mpk: number
+     osis: string,
+     mpk: string
 }
 
 export const postInsertVote: ObjectSchema = joi.object().keys({
-     osis: joi.number().integer().min(1).max(999).required(),
-     mpk: joi.number().integer().min(1).max(999).required()
+     osis: joi.string().hex().length(24).required(),
+     mpk: joi.string().hex().length(24).required()
 })
 
 export type DeleteResetVote = {
