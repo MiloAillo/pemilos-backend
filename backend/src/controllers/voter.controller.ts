@@ -17,9 +17,9 @@ import { PostInsertVote } from "../dtos/vote.dto";
 import { getPayload } from "../utils/jwt.util";
 
 /**
- * ⚠️ SECURITY: CSV Injection Prevention
+ * ⚠️ SECURITY: CSV Injection Prevention - Validation Approach
  * 
- * Sanitizes CSV field values to prevent formula injection attacks.
+ * Validates CSV field values and rejects those that could be interpreted as formulas.
  * 
  * Attack Vector:
  * - Excel, LibreOffice, and Google Sheets execute formulas starting with: =, +, -, @
@@ -27,29 +27,35 @@ import { getPayload } from "../utils/jwt.util";
  * - Tab (\t) and carriage return (\r) can be used for injection payloads
  * 
  * Prevention Strategy:
- * - Prefix dangerous characters with a single quote (')
- * - This forces spreadsheet applications to treat the field as text, not formula
+ * - REJECT inputs starting with dangerous characters at import time
+ * - Prevents mutation of canonical data (no escape prefix added)
+ * - Ensures clean data in database (no special characters)
+ * - Username in password matches stored username
  * 
- * Example:
- * - Input:  "=2+2"
- * - Output: "'=2+2"  (safe - rendered as literal text)
+ * Why Validation over Sanitization:
+ * - Sanitization adds escape prefix (') causing username/password field mismatch
+ * - Password generation uses original username, but stored username is prefixed
+ * - Rejection ensures data integrity and prevents authentication issues
  * 
  * @param field - Raw CSV field value from uploaded file
- * @returns Sanitized field safe for CSV export/import
+ * @param fieldName - Field name for error message
+ * @throws 400 - Field starts with dangerous character
  */
-const sanitizeCSVField = (field: string): string => {
-  if (!field) return field;
+const validateCSVField = (field: string, fieldName: string): void => {
+  if (!field) return;
   
   const fieldStr = String(field);
   // ⚠️ Characters that can trigger formula execution in spreadsheet applications
   const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
   
-  // Prefix with single quote to escape formula interpretation
+  // Reject dangerous input at source
   if (dangerousChars.some(char => fieldStr.startsWith(char))) {
-    return `'${fieldStr}`;
+    throw createError(
+      "failed",
+      `Invalid ${fieldName}: "${field}" - cannot start with formula characters (=, +, -, @, tab, CR)`,
+      400
+    );
   }
-  
-  return fieldStr;
 };
 
 /**
@@ -102,12 +108,17 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
       .pipe(csv())
       .on("data", (data) => {
         console.log(data)
+        
+        // ⚠️ SECURITY: Validate all fields and reject CSV injection
+        validateCSVField(data.NAME, "NAME");
+        validateCSVField(data.USERNAME, "USERNAME");
+        validateCSVField(data.CLASS, "CLASS");
+        
         voters.push({
-          // ⚠️ SECURITY: Sanitize all fields against CSV injection
-          name: sanitizeCSVField(data.NAME),
-          username: sanitizeCSVField(data.USERNAME),
-          class: sanitizeCSVField(data.CLASS),
-          // Generate deterministic password (should be hashed in generatePassword util)
+          name: data.NAME,
+          username: data.USERNAME,
+          class: data.CLASS,
+          // Generate deterministic password from validated username
           password: generatePassword(data.USERNAME),
           isVoted: false,
         });
@@ -172,12 +183,17 @@ export const exportTokenizedVoterFromCSV = asyncHandler(async (req, res) => {
     fs.createReadStream(filePath)
       .pipe(csv())
       .on("data", (data) => {
+        // ⚠️ SECURITY: Validate all fields and reject CSV injection
+        validateCSVField(data.NAMA, "NAMA");
+        validateCSVField(data.USERNAME, "USERNAME");
+        validateCSVField(data.KELAS, "KELAS");
+        validateCSVField(data.TOKEN, "TOKEN");
+        
         voters.push({
-          // ⚠️ SECURITY: Sanitize all fields including pre-generated TOKEN
-          name: sanitizeCSVField(data.NAMA),
-          username: sanitizeCSVField(data.USERNAME),
-          class: sanitizeCSVField(data.KELAS),
-          password: sanitizeCSVField(data.TOKEN), // TOKEN should already be hashed
+          name: data.NAMA,
+          username: data.USERNAME,
+          class: data.KELAS,
+          password: data.TOKEN, // Pre-generated token validated
           isVoted: false,
         });
       })
