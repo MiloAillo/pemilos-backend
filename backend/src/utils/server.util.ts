@@ -130,10 +130,25 @@ export const shutdown = async (server: Server) => {
 /**
  * Initialize application settings cache in Redis
  * 
+ * IMPORTANT: Only sets defaults when fields don't exist
+ * - Preserves existing values across server restarts
+ * - Prevents unauthorized voting re-enablement after deployment
+ * - Default: voting disabled (fail-safe behavior)
+ * 
  * Why Redis?
  * - Settings are read on every vote validation (high frequency)
  * - Redis provides <1ms reads vs MongoDB's ~10-50ms
  * - Reduces database load for frequently accessed configuration
+ * 
+ * Security Rationale:
+ * - Admin's voting toggle decision persists across restarts
+ * - No accidental election reopening after server restart/deployment
+ * - Fail-safe: requires explicit admin action to enable voting
+ * 
+ * Implementation:
+ * - Uses HEXISTS to check field existence before setting
+ * - Preserves admin configuration (toggle state, candidate cache)
+ * - Logs whether default applied or existing value preserved
  * 
  * Hash structure in Redis:
  *   Key: "setting"
@@ -152,17 +167,39 @@ export const initSetting = async () => {
 
   const key = "setting";
 
-  // Default settings on server start
-  // NOTE: In production, consider loading these from environment or database
-  const setting: RedisSettingCache = {
-    isVotingAllowed: "true",  // Enable voting by default
+  // Default settings (applied only when fields don't already exist)
+  // Preserves admin's previous configuration across server restarts
+  const defaultSettings: RedisSettingCache = {
+    isVotingAllowed: "false",  // Disabled by default (fail-safe)
     candidates: ""             // Empty until candidates are loaded via admin API
   }
 
-  // HSET creates or overwrites the hash key with provided fields
-  await redis.hset(key, setting)
+  // Check if isVotingAllowed field exists
+  const votingFieldExists = await redis.hexists(key, "isVotingAllowed");
+  
+  if (!votingFieldExists) {
+    // Only set default if field doesn't exist (first run or Redis cleared)
+    await redis.hset(key, "isVotingAllowed", defaultSettings.isVotingAllowed);
+    logger.info("Initialized isVotingAllowed to 'false' (voting disabled by default)");
+  } else {
+    // Preserve existing value set by admin
+    const currentValue = await redis.hget(key, "isVotingAllowed");
+    logger.info(`Preserved existing isVotingAllowed: ${currentValue}`);
+  }
 
-  logger.info("Setting initiation succeeded")
+  // Check if candidates field exists
+  const candidatesFieldExists = await redis.hexists(key, "candidates");
+  
+  if (!candidatesFieldExists) {
+    // Initialize empty candidates list
+    await redis.hset(key, "candidates", defaultSettings.candidates);
+    logger.info("Initialized candidates to empty string");
+  } else {
+    // Preserve existing candidate cache
+    logger.info("Preserved existing candidates cache");
+  }
+
+  logger.info("Setting initialization completed")
 
   return
 }
