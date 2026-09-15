@@ -142,7 +142,7 @@ export const rateLimitMiddleware: MiddlewareHandler = async (req, res, next) => 
       * - Example: "203.0.113.1, 198.51.100.2, 192.0.2.1"
       * - Extract: "203.0.113.1" (client) vs "192.0.2.1" (last proxy)
       */
-     else if (req.headers['x-forwarded-for']) {
+     else if (trustProxy && req.headers['x-forwarded-for']) {
           const forwardedIps = (req.headers['x-forwarded-for'] as string).split(',');
           userIp = forwardedIps[0].trim();
      }
