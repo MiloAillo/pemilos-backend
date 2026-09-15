@@ -45,7 +45,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, __: Nex
             // SECURITY: Stack trace only logged server-side, never in production response
             // Why? Stack traces reveal internal file paths, library versions, and code structure
             // that attackers can use to identify vulnerabilities
-            stack: isProduction ? undefined : err.stack
+            stack: isProduction ? undefined : (err instanceof Error ? err.stack : undefined)
         };
 
         // Log to centralized logging system (CloudWatch, ELK, etc.)
