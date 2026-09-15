@@ -52,12 +52,5 @@ export const postAuthLogin: ObjectSchema = joi.object().keys({
      // Password validation with complexity requirements
      // - Minimum 8 characters (industry standard for basic security)
      // - Maximum 60 characters (prevents abuse, no hashing performed)
-     // - Must contain: uppercase letter, lowercase letter, and digit
-     // - Pattern breakdown: (?=.*[a-z]) = has lowercase
-     //                      (?=.*[A-Z]) = has uppercase  
-     //                      (?=.*\d)    = has digit
-     //                      .+          = any characters (length handled by min/max)
-     password: joi.string().min(8).max(60).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/).required().messages({
-          'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-     })
+     password: joi.string().min(8).max(60).required()
 })
