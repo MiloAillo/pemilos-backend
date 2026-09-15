@@ -18,7 +18,12 @@ const cookieParser = require('cookie-parser')
 // Load environment-specific configuration before any other initialization.
 // Production uses .env, while development uses .env.dev to allow different
 // database connections, API keys, and security settings per environment.
-const NODE_ENV = process.env.NODE_ENV || 'development';
+if (!process.env.NODE_ENV) {
+  console.error('FATAL: NODE_ENV environment variable must be set before starting the application');
+  process.exit(1);
+}
+
+const NODE_ENV = process.env.NODE_ENV;
 const envFile = NODE_ENV === 'production' ? '.env' : '.env.dev';
 const envPath = path.resolve(__dirname, "../../", envFile);
 dotenv.config({ path: envPath });
