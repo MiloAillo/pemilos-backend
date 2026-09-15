@@ -69,24 +69,46 @@ export type GetUser = {
 /**
  * Validation schema for user query parameters
  * 
- * All fields are optional - allows partial filtering by any combination
- * of name, pagination, vote status, class, or role
+ * All fields are optional with default values to support flexible filtering
+ * 
+ * Security Enhancements:
+ * - role: Whitelist validation (only "voter" or "admin" allowed)
+ * - page: Bounds checking (1-10000) prevents DoS via massive skip offsets
+ * - isVoted: Type validation prevents object injection
+ * - class: Enum validation against CLASS constant
+ * - stripUnknown: Removes unexpected query parameters (parameter pollution prevention)
+ * 
+ * Type Coercion (via Joi convert: true):
+ * - Query string "1" → number 1
+ * - Query string "true" → boolean true
+ * - Undefined → schema default values
  */
 export const getUser: ObjectSchema = joi.object().keys({
-     // Partial name match for search functionality
-     name: joi.string(),
-     
-     // Page number for pagination (1-indexed expected)
-     page: joi.number(),
-     
-     // Filter by whether user has already voted
-     isVoted: joi.boolean(),
-     
-     // Optional filter by school class - validated against CLASS enum
-     class: joi.string().valid(...CLASS).optional(),
-     
-     // Filter by user role
-     role: joi.string()
+    // Partial name match for search functionality
+    // Default: empty string (matches all names)
+    name: joi.string().optional().default(""),
+    
+    // Page number for pagination (1-indexed expected)
+    // Bounds: 1-10000 prevents DoS via massive MongoDB skip offsets
+    // Default: 1 (first page)
+    page: joi.number().integer().min(1).max(10000).optional().default(1),
+    
+    // Filter by whether user has already voted
+    // Type validation prevents NoSQL injection via {$exists: true}
+    // Default: undefined (no filter applied)
+    isVoted: joi.boolean().optional(),
+    
+    // Optional filter by school class - validated against CLASS enum
+    // Prevents arbitrary class names from being queried
+    class: joi.string().valid(...CLASS).optional(),
+    
+    // Filter by user role - whitelist validation prevents injection
+    // Only "voter" or "admin" allowed (no $ne, $gt, or other operators)
+    // Default: "voter" (most common use case)
+    role: joi.string().valid("voter", "admin").optional().default("voter")
+}).options({
+    // Strip unknown query parameters (security: prevents parameter pollution)
+    stripUnknown: true
 })
 
 /**

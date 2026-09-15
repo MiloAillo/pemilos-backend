@@ -121,14 +121,14 @@ export const createUser = asyncHandler(async (req, res) => {
  * @access Public/Admin (depends on auth middleware configuration)
  */
 export const getAllUser = asyncHandler(async (req, res) => {
-  // Extract query parameters with sensible defaults
-  // Defaults ensure the endpoint works without any query params
+  // Extract query parameters (already validated and type-coerced by validateQueryDTO)
+  // Defaults are provided by Joi schema, no need for fallback values here
   const {
-    page = 1,           // Start at first page
-    isVoted = false,    // Show non-voted users by default
-    class: userClass,   // Optional class filter
-    role = "voter",     // Default to voter role
-    name = "",          // Empty string matches all names
+    page,           // number (1-10000), default: 1
+    isVoted,        // boolean | undefined
+    class: userClass, // string (CLASS enum) | undefined
+    role,           // "voter" | "admin", default: "voter"
+    name,           // string, default: ""
   } = req.query;
 
   // Delegate to service layer for query construction and execution
