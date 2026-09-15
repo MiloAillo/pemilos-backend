@@ -65,7 +65,7 @@ export const createUser = asyncHandler(async (req, res) => {
   res.status(201).json({
     status: "success",
     message: "user successfully created",
-    data: user.toJSON, // ⚠️ Ensure toJSON method excludes password field
+    data: user.toJSON,
   });
 });
 
