@@ -154,10 +154,9 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
  * 7. Return success response
  * 
  * ⚠️ SECURITY CONSIDERATIONS:
- * - TOKEN field contains pre-generated passwords - must be sanitized to prevent injection
- * - Tokens should already be hashed externally before CSV generation
- * - If tokens are plaintext in CSV, they're exposed during upload and parsing
- * - No validation that tokens meet password complexity requirements
+ * - TOKEN field contains pre-generated passwords in plain text (by design)
+ * - Must be validated to prevent CSV injection
+ * - Tokens stored as-is in database (no hashing performed)
  * - Duplicate username/token pairs can occur (DB constraint will reject)
  * 
  * DIFFERENCE FROM uploadVoterFromCsv:

@@ -42,9 +42,9 @@ export const postUserCreate: ObjectSchema = joi.object().keys({
      // Unique identifier for login - must be between 5-30 characters
      username: joi.string().min(5).max(30).required(),
      
-     // Plain text password (will be hashed by service layer)
-     // WARNING: Consider increasing min length to 8+ and adding complexity rules
-     password: joi.string().min(5).max(30).required(),
+    // Plain text password (stored as-is, NOT hashed - by design)
+    // Length: 5-30 characters (sufficient for temporary election credentials)
+    password: joi.string().min(5).max(30).required(),
      
      // School class assignment - validated against CLASS constant
      // Previously named 'kelas' - renamed to 'class' for consistency

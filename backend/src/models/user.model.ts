@@ -103,20 +103,24 @@ const userSchema = new Schema({
            enum: CLASS // Validates against allowed class values
       },
 
-      /**
-       * Password
-       * 
-       * Hashed password for authentication.
-       * 
-       * Security Notes:
-       * - MUST be hashed using bcrypt before storage (handled in auth middleware)
-       * - Never returned in API responses (use .select('-password') in queries)
-       * - Minimum strength requirements enforced at validation layer
-       */
-      password: {
-           type: String,
-           required: true,
-      },
+     /**
+      * Password
+      * 
+      * STORED AS PLAIN TEXT (by design requirement).
+      * 
+      * ⚠️ SECURITY WARNING:
+      * - Passwords are stored in plain text format
+      * - This is an intentional design decision per project requirements
+      * - Database compromise will expose all user credentials
+      * 
+      * Authentication:
+      * - Direct string comparison: req.password === user.password
+      * - No bcrypt or argon2 hashing implemented
+      */
+     password: {
+          type: String,
+          required: true,
+     },
 
       /**
        * isVoted (Denormalized Flag)

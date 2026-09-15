@@ -8,21 +8,23 @@
  * SECURITY IMPLICATIONS:
  * - Uses crypto.randomBytes (CSPRNG) for unpredictable random generation
  * - NEVER use Math.random() for security purposes - it's predictable and exploitable
- * - Generated passwords should be force-changed on first login
+ * - Generated passwords are stored in plain text (per project requirements)
  * 
  * WHEN TO USE:
  * - Bulk student/voter account creation by admin
- * - Password reset temporary tokens
- * - API key generation
+ * - Temporary election credentials generation
  * 
  * WHEN NOT TO USE:
- * - User-chosen passwords (should use bcrypt hashing instead)
- * - Session tokens (use JWT or crypto.randomBytes directly for longer tokens)
+ * - Systems requiring password hashing (this generates plain text)
+ * - Long-lived credentials (these are temporary election tokens)
  * 
  * INTEGRATION:
  * - Called by admin services when creating voter accounts in bulk
- * - Generated passwords must be hashed with bcrypt before database storage
- * - Consider sending generated passwords via secure channel (not email plaintext)
+ * - Generated passwords stored AS-IS in database (no hashing)
+ * - Passwords transmitted to users for one-time election login
+ * 
+ * ⚠️ SECURITY NOTE:
+ * Generated passwords are stored in plain text per project requirements.
  */
 
 import crypto from 'crypto';
@@ -39,24 +41,18 @@ import crypto from 'crypto';
  * - Colon separator ensures password contains special character (basic complexity)
  * 
  * SECURITY CONSIDERATIONS:
- * - Generated passwords should be marked as "temporary" in database
- * - Force password change on first login
- * - Passwords should still be hashed with bcrypt before storage
- * - Consider expiration time (e.g., 24-48 hours) for unused accounts
- * 
- * COMPLIANCE:
- * - Meets minimum complexity requirements (alphanumeric + special char)
- * - Uses CSPRNG for unpredictability
- * - Should be transmitted securely (HTTPS only, avoid email if possible)
+ * - Generated passwords are stored in plain text (intentional design)
+ * - Passwords are temporary credentials for single election event
+ * - Random prefix provides unpredictability
+ * - Username suffix aids in password distribution and recall
  * 
  * @param username - The username to embed in the password
- * @returns Temporary password string in format {random}:{username}
+ * @returns Plain text password string in format {random}:{username}
  * 
  * @example
  *   const tempPassword = generatePassword('student123');
  *   // Returns something like: "xK9mP2:student123"
- *   const hashedPassword = await bcrypt.hash(tempPassword, 10);
- *   // Store hashedPassword in database, send tempPassword to user
+ *   // Store tempPassword directly in database, distribute to user
  */
 export const generatePassword = (username: string) => {
      // Password will be customized according to OSIS requirements

@@ -74,7 +74,7 @@ export const login = asyncHandler(async (req, res) => {
    * 
    * authLogin service performs:
    * - User lookup by username
-   * - Password verification (plaintext comparison - consider hashing)
+   * - Password verification (plain text comparison - intentional design)
    * - Vote status check (prevents re-voting)
    * - Audit logging
    * 

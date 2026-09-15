@@ -6,8 +6,8 @@ import joi, {ObjectSchema} from "joi";
  * Used for user authentication and session establishment
  */
 export type PostAuthLogin = {
-     username: string, // User's unique username identifier
-     password: string, // Plain text password (validated, then checked against hash)
+     username: string,
+     password: string, // Plain text password (validated, then compared directly)
 }
 
 /**
@@ -28,7 +28,7 @@ export type PostAuthLogin = {
  * Security considerations:
  * - Password complexity enforced: uppercase + lowercase + digit minimum
  * - Min 8 characters prevents weak passwords
- * - Max 60 characters prevents DoS via bcrypt hash computation cost
+ * - Max 60 characters prevents excessively long password strings
  * - Pattern validation happens before database lookup (prevents timing attacks)
  * - Username max length prevents buffer overflow and display issues
  * 
@@ -51,7 +51,7 @@ export const postAuthLogin: ObjectSchema = joi.object().keys({
      
      // Password validation with complexity requirements
      // - Minimum 8 characters (industry standard for basic security)
-     // - Maximum 60 characters (bcrypt limitation and DoS prevention)
+     // - Maximum 60 characters (prevents abuse, no hashing performed)
      // - Must contain: uppercase letter, lowercase letter, and digit
      // - Pattern breakdown: (?=.*[a-z]) = has lowercase
      //                      (?=.*[A-Z]) = has uppercase  

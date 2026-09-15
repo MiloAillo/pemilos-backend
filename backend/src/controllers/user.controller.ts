@@ -30,7 +30,8 @@ import { logger } from "../utils/logger.util";
  * during destructuring to avoid syntax errors
  * 
  * SECURITY CONSIDERATIONS:
- * ⚠️ Password should be validated for strength before hashing
+ * ⚠️ Passwords are stored in plain text (by design)
+ * ⚠️ Password validation occurs at DTO layer (length/format only)
  * ⚠️ Response exposes user.toJSON - ensure password is excluded in model toJSON method
  * ⚠️ No rate limiting visible here - should be applied at middleware/route level
  * 
@@ -50,7 +51,7 @@ export const createUser = asyncHandler(async (req, res) => {
   const { class: userClass, name, username, password, role } = req.body;
 
   // Delegate to service layer for business logic and database operations
-  // Service handles: password hashing, validation, audit logging, error handling
+  // Service handles: validation, audit logging, error handling, database insertion
   const user = await userCreate({
     name,
     username,
