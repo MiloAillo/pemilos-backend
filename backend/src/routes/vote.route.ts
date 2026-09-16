@@ -2,6 +2,8 @@ import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { vote } from "../controllers/voter.controller";
 import { rateLimitMiddleware } from "../middlewares/rate-limit.middleware";
+import { validateDTO } from "../middlewares/validate.middleware";
+import { postInsertVote } from "../dtos/vote.dto";
 
 /**
  * Vote Routes
@@ -60,11 +62,13 @@ router.use(authMiddleware)
  * 
  * Middleware Chain:
  * 1. authMiddleware (applied via router.use above)
- * 2. vote controller handler
+ * 2. validateDTO(postInsertVote) - Validates request body (osis and mpk ObjectIDs)
+ * 3. vote controller handler
  * 
  * Request Body:
  * {
- *   candidate_id: string (UUID of chosen candidate)
+ *   osis: string (24-char hex ObjectID of OSIS candidate)
+ *   mpk: string (24-char hex ObjectID of MPK candidate)
  * }
  * 
  * Access Control:
@@ -74,7 +78,7 @@ router.use(authMiddleware)
  * 
  * Flow:
  * 1. Auth middleware validates JWT and loads user
- * 2. Controller validates request body (candidate_id present and valid)
+ * 2. validateDTO ensures osis and mpk are valid ObjectIDs (24-char hex)
  * 3. Controller checks voting status (is voting period active?)
  * 4. Controller checks duplicate vote (has this user voted?)
  * 5. Controller records vote in database
@@ -82,7 +86,7 @@ router.use(authMiddleware)
  * 
  * Error Scenarios:
  * - 401: Invalid or missing JWT token
- * - 400: Missing or invalid candidate_id
+ * - 400: Missing or invalid candidate_id (osis/mpk not valid ObjectIDs)
  * - 403: User has already voted
  * - 403: Voting period is closed
  * - 404: Candidate does not exist
@@ -90,7 +94,7 @@ router.use(authMiddleware)
  * 
  * Rate Limiting Consideration:
  * - rateLimitMiddleware imported but not currently applied
- * - SHOULD BE ADDED: router.post("/", rateLimitMiddleware, vote)
+ * - SHOULD BE ADDED: router.post("/", rateLimitMiddleware, validateDTO(postInsertVote), vote)
  * - Prevents brute force attacks trying different candidate IDs
  * - Limits repeated vote attempts after first successful submission
  * 
@@ -100,6 +104,6 @@ router.use(authMiddleware)
  * - Implement idempotency to handle duplicate requests safely
  * - Log vote attempts for audit purposes (without exposing vote content)
  */
-router.post("/", vote)
+router.post("/", validateDTO(postInsertVote), vote)
 
 export default router
