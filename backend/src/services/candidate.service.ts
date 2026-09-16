@@ -152,14 +152,23 @@ export const candidateGet = async () => {
           const versionBefore = await redis.get("setting:candidates:version")
           const cached = await redis.hget("setting", "candidates")
 
-          // STEP 2: Return cached data immediately if available (fast path)
+          // STEP 2: Return cached data if available AND version still valid (fast path)
           if (cached) {
-               // Deserialize JSON string to candidate array
-               const parsed = JSON.parse(cached)
-               logger.info(`Candidates cache hit (version: ${versionBefore || '0'})`)
+               // Re-check version to ensure cache hasn't been invalidated during read
+               const versionAfter = await redis.get("setting:candidates:version")
                
-               // Type cast for TypeScript safety (Redis returns plain objects)
-               return parsed as RedisCandidateCache[]
+               if (versionBefore === versionAfter) {
+                    // Version unchanged - cache is valid
+                    const parsed = JSON.parse(cached)
+                    logger.info(`Candidates cache hit (version: ${versionBefore || '0'})`)
+                    
+                    // Type cast for TypeScript safety (Redis returns plain objects)
+                    return parsed as RedisCandidateCache[]
+               } else {
+                    // Version changed - cache invalidated during read, fall through to DB fetch
+                    logger.warn(`Candidates cache invalidated during read (${versionBefore} -> ${versionAfter}), fetching from DB`)
+                    // Fall through to STEP 3 (cache miss path)
+               }
           }
 
           // STEP 3: Cache miss - fetch from MongoDB (slow path)
