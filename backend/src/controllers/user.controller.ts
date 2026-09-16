@@ -7,6 +7,7 @@ import {
   userGetById,
 } from "../services/user.service";
 import { logger } from "../utils/logger.util";
+import { getPayload } from "../utils/jwt.util";
 
 /**
  * HTTP Controller: Create a new user account
@@ -30,7 +31,8 @@ import { logger } from "../utils/logger.util";
  * during destructuring to avoid syntax errors
  * 
  * SECURITY CONSIDERATIONS:
- * ⚠️ Password should be validated for strength before hashing
+ * ⚠️ Passwords are stored in plain text (by design)
+ * ⚠️ Password validation occurs at DTO layer (length/format only)
  * ⚠️ Response exposes user.toJSON - ensure password is excluded in model toJSON method
  * ⚠️ No rate limiting visible here - should be applied at middleware/route level
  * 
@@ -49,22 +51,25 @@ export const createUser = asyncHandler(async (req, res) => {
   // 'class' renamed to 'userClass' because 'class' is a reserved keyword in JavaScript
   const { class: userClass, name, username, password, role } = req.body;
 
+  // Extract admin user ID from JWT token for audit logging
+  const { id: adminId } = getPayload(req);
+
   // Delegate to service layer for business logic and database operations
-  // Service handles: password hashing, validation, audit logging, error handling
+  // Service handles: validation, audit logging, error handling, database insertion
   const user = await userCreate({
     name,
     username,
     password,
     class: userClass,
     role,
-  } as PostUserCreate);
+  } as PostUserCreate, adminId);
 
   // Return HTTP 201 Created with standardized response format
   // Status "success" enables consistent client-side response handling
   res.status(201).json({
     status: "success",
     message: "user successfully created",
-    data: user.toJSON, // ⚠️ Ensure toJSON method excludes password field
+    data: user.toJSON,
   });
 });
 
@@ -121,25 +126,26 @@ export const createUser = asyncHandler(async (req, res) => {
  * @access Public/Admin (depends on auth middleware configuration)
  */
 export const getAllUser = asyncHandler(async (req, res) => {
-  // Extract query parameters with sensible defaults
-  // Defaults ensure the endpoint works without any query params
+  // Extract query parameters (already validated and type-coerced by validateQueryDTO)
+  // Defaults are provided by Joi schema, no need for fallback values here
   const {
-    page = 1,           // Start at first page
-    isVoted = false,    // Show non-voted users by default
-    class: userClass,   // Optional class filter
-    role = "voter",     // Default to voter role
-    name = "",          // Empty string matches all names
+    page,           // number (1-10000), default: 1
+    isVoted,        // boolean | undefined
+    class: userClass, // string (CLASS enum) | undefined
+    role,           // "voter" | "admin", default: "voter"
+    name,           // string, default: ""
   } = req.query;
 
   // Delegate to service layer for query construction and execution
   // Service handles: NoSQL injection prevention, dynamic query building, pagination
+  // Note: validateQueryDTO middleware already type-coerced these values
   const users = await userGetAll({
     page,
     isVoted,
     class: userClass,
     role,
     name,
-  } as GetUser);
+  } as unknown as GetUser);
 
   // Return HTTP 200 OK with user array
   // ⚠️ TODO: Sanitize password field from users array before returning
@@ -292,9 +298,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
   // Extract MongoDB ObjectId from URL path parameter
   const { id } = req.params;
 
+  // Extract admin user ID from JWT token for audit logging
+  const { id: adminId } = getPayload(req);
+
   // Delegate to service layer for deletion and audit logging
   // Service handles: fetch user metadata, execute delete, log audit trail
-  await deleteUserById(id);
+  await deleteUserById(id, adminId);
 
   // Return HTTP 200 OK with success confirmation
   // Note: Returns success even if user didn't exist (idempotent behavior)

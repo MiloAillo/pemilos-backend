@@ -4,6 +4,26 @@
  * Business logic layer for authentication operations.
  * Validates user credentials and enforces voting system security rules.
  * 
+ * This system stores passwords in PLAIN TEXT format by intentional design.
+ * 
+ * JUSTIFICATION:
+ * - Temporary election system with limited lifespan (single event)
+ * - Controlled environment (school network, limited access)
+ * - Simplified credential distribution (printed voter cards)
+ * - Administrative reset capability required (plain text enables recovery)
+ * 
+ * SECURITY IMPLICATIONS:
+ * - Database compromise exposes all user credentials
+ * - No protection against offline password extraction
+ * - Credentials visible to database administrators
+ * 
+ * MITIGATION MEASURES:
+ * - Database access restricted to authorized administrators only
+ * - Passwords are temporary (valid only during election period)
+ * - Audit logging tracks all authentication attempts
+ * - Rate limiting prevents brute force attacks
+ * - HTTPS prevents credential interception in transit
+ * 
  * SECURITY FEATURES:
  * - User credential validation (username + password)
  * - Vote status enforcement (prevents re-voting via login)
@@ -32,15 +52,20 @@ import { logAudit } from "../utils/audit.util";
  * 1. Look up user by username in database
  * 2. Validate user exists
  * 3. Check if user has already voted (voting system rule)
- * 4. Verify password matches (plaintext comparison)
+ * 4. Verify password matches (plain text comparison)
  * 5. Log authentication result
  * 6. Return user object for JWT token generation
  * 
  * SECURITY CONSIDERATIONS:
- * - Plaintext password storage (INSECURE - consider bcrypt hashing)
+ * - Plain text password storage (intentional per project requirements)
  * - Vote status check prevents users from voting multiple times
  * - All attempts logged for audit trail
  * - Generic error messages prevent username enumeration attacks
+ * 
+ * ⚠️ SECURITY TRADE-OFF:
+ * This system stores passwords in plain text by design.
+ * - Database compromise exposes all user credentials
+ * - Acceptable for controlled environment (school election system)
  * 
  * @param req - Login credentials { username, password }
  * @returns User object with _id, username, name, role, isVoted
@@ -116,17 +141,17 @@ export const authLogin = async (req: PostAuthLogin) => {
     }
 
     /**
-     * STEP 4: Verify password
+     * STEP 4: Verify password matches stored password
      * 
-     * SECURITY WARNING: Plaintext password comparison is INSECURE
-     * - Passwords stored in plain text in database
-     * - Database breach exposes all user passwords
-     * - Recommend migration to bcrypt or argon2 hashing
+     * Plain text password comparison (by design):
+     * - Direct string comparison: req.password === user.password
+     * - No hashing or salting implemented
+     * - Intentional design decision per project requirements
      * 
-     * BETTER APPROACH:
-     * - Hash password with bcrypt during user registration
-     * - Store only hashed password in database
-     * - Compare: bcrypt.compare(req.password, user.passwordHash)
+     * ⚠️ SECURITY IMPLICATION:
+     * - Database breach exposes all passwords in readable format
+     * - Acceptable trade-off for this use case (temporary election credentials)
+     * - Consider migration to bcrypt if requirements change in future
      * 
      * AUDIT: Log failed password attempts for security monitoring
      * Excessive failed attempts may indicate brute force attack

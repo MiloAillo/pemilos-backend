@@ -31,7 +31,7 @@ import { logAudit } from "../utils/audit.util"
  * AUDIT LOGGING:
  * - Records actor, action, resource, timestamp for every insertion attempt
  * - Captures both success and failure cases with error details
- * - TODO: Extract actual admin user ID from request context instead of 'system'
+ * - Admin user ID extracted from JWT token for accountability
  * - Audit logs stored in append-only file for compliance requirements
  * 
  * PERFORMANCE:
@@ -40,10 +40,11 @@ import { logAudit } from "../utils/audit.util"
  * - Cache invalidation is cheap (delete + increment, no re-population)
  * 
  * @param req - Candidate creation payload (name, vision, mission, photo)
+ * @param adminId - MongoDB ObjectId of admin performing the action (from JWT)
  * @returns {Promise<Candidate>} The inserted candidate document with MongoDB _id
  * @throws Error if database insertion fails or Redis operations fail
  */
-export const candidateInsert = async (req: PostCandidateCreate) => {
+export const candidateInsert = async (req: PostCandidateCreate, adminId: string) => {
      try {
           // STEP 1: Insert candidate document into MongoDB
           const result = await Candidate.insertOne(req)
@@ -70,11 +71,11 @@ export const candidateInsert = async (req: PostCandidateCreate) => {
           logAudit({
                timestamp: new Date().toISOString(),
                action: 'CANDIDATE_INSERT',
-               actor: 'system', // TODO: Replace with actual admin user ID from JWT
+               actor: adminId,
                actorRole: 'admin',
                resource: 'candidate',
                resourceId: result._id?.toString(),
-               details: { name: req.name, vision: req.vision, mission: req.mission },
+               details: { name: req.name, label: req.label, number: req.number },
                success: true
           });
 
@@ -85,7 +86,7 @@ export const candidateInsert = async (req: PostCandidateCreate) => {
           logAudit({
                timestamp: new Date().toISOString(),
                action: 'CANDIDATE_INSERT',
-               actor: 'system', // TODO: Replace with actual admin user ID
+               actor: adminId,
                actorRole: 'admin',
                resource: 'candidate',
                details: { name: req.name, error: (err as Error).message },
@@ -151,14 +152,23 @@ export const candidateGet = async () => {
           const versionBefore = await redis.get("setting:candidates:version")
           const cached = await redis.hget("setting", "candidates")
 
-          // STEP 2: Return cached data immediately if available (fast path)
+          // STEP 2: Return cached data if available AND version still valid (fast path)
           if (cached) {
-               // Deserialize JSON string to candidate array
-               const parsed = JSON.parse(cached)
-               logger.info(`Candidates cache hit (version: ${versionBefore || '0'})`)
+               // Re-check version to ensure cache hasn't been invalidated during read
+               const versionAfter = await redis.get("setting:candidates:version")
                
-               // Type cast for TypeScript safety (Redis returns plain objects)
-               return parsed as RedisCandidateCache[]
+               if (versionBefore === versionAfter) {
+                    // Version unchanged - cache is valid
+                    const parsed = JSON.parse(cached)
+                    logger.info(`Candidates cache hit (version: ${versionBefore || '0'})`)
+                    
+                    // Type cast for TypeScript safety (Redis returns plain objects)
+                    return parsed as RedisCandidateCache[]
+               } else {
+                    // Version changed - cache invalidated during read, fall through to DB fetch
+                    logger.warn(`Candidates cache invalidated during read (${versionBefore} -> ${versionAfter}), fetching from DB`)
+                    // Fall through to STEP 3 (cache miss path)
+               }
           }
 
           // STEP 3: Cache miss - fetch from MongoDB (slow path)
@@ -213,7 +223,7 @@ export const candidateGet = async () => {
  * AUDIT LOGGING:
  * - Records actor, action, resource ID, and candidate name for every deletion
  * - Captures both success and failure cases with error details
- * - TODO: Extract actual admin user ID from request context instead of 'system'
+ * - Admin user ID extracted from JWT token for accountability
  * - Audit logs stored in append-only file for compliance requirements
  * 
  * DATA INTEGRITY:
@@ -227,10 +237,11 @@ export const candidateGet = async () => {
  * - Cache invalidation is cheap (delete + increment, no re-population)
  * 
  * @param id - MongoDB ObjectId string of candidate to delete
+ * @param adminId - MongoDB ObjectId of admin performing the action (from JWT)
  * @returns {Promise<void>} Resolves when deletion and cache invalidation complete
  * @throws Error if database deletion fails or Redis operations fail
  */
-export const deleteCandidateById = async (id: string) => {
+export const deleteCandidateById = async (id: string, adminId: string) => {
      try {
           // STEP 1: Fetch candidate before deletion for audit logging
           // lean() returns plain object for minimal overhead
@@ -264,7 +275,7 @@ export const deleteCandidateById = async (id: string) => {
           logAudit({
                timestamp: new Date().toISOString(),
                action: 'CANDIDATE_DELETE',
-               actor: 'system', // TODO: Replace with actual admin user ID from JWT
+               actor: adminId,
                actorRole: 'admin',
                resource: 'candidate',
                resourceId: id,
@@ -277,7 +288,7 @@ export const deleteCandidateById = async (id: string) => {
           logAudit({
                timestamp: new Date().toISOString(),
                action: 'CANDIDATE_DELETE',
-               actor: 'system', // TODO: Replace with actual admin user ID
+               actor: adminId,
                actorRole: 'admin',
                resource: 'candidate',
                resourceId: id,

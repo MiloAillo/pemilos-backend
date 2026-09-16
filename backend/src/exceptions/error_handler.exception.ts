@@ -26,7 +26,7 @@ import { logger } from "../utils/logger.util";
  * - All errors are logged server-side regardless of environment
  * - IP addresses are logged for security auditing
  */
-export const errorHandler = (err: AppError, req: Request, res: Response, __: NextFunction) => {
+export const errorHandler = (err: AppError | Error | unknown, req: Request, res: Response, __: NextFunction) => {
     // Environment detection - determines what information is safe to expose
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -45,7 +45,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, __: Nex
             // SECURITY: Stack trace only logged server-side, never in production response
             // Why? Stack traces reveal internal file paths, library versions, and code structure
             // that attackers can use to identify vulnerabilities
-            stack: isProduction ? undefined : err.stack
+            stack: isProduction ? undefined : (err instanceof Error ? err.stack : undefined)
         };
 
         // Log to centralized logging system (CloudWatch, ELK, etc.)

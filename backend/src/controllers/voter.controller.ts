@@ -17,9 +17,9 @@ import { PostInsertVote } from "../dtos/vote.dto";
 import { getPayload } from "../utils/jwt.util";
 
 /**
- * ⚠️ SECURITY: CSV Injection Prevention
+ * ⚠️ SECURITY: CSV Injection Prevention - Validation Approach
  * 
- * Sanitizes CSV field values to prevent formula injection attacks.
+ * Validates CSV field values and rejects those that could be interpreted as formulas.
  * 
  * Attack Vector:
  * - Excel, LibreOffice, and Google Sheets execute formulas starting with: =, +, -, @
@@ -27,29 +27,35 @@ import { getPayload } from "../utils/jwt.util";
  * - Tab (\t) and carriage return (\r) can be used for injection payloads
  * 
  * Prevention Strategy:
- * - Prefix dangerous characters with a single quote (')
- * - This forces spreadsheet applications to treat the field as text, not formula
+ * - REJECT inputs starting with dangerous characters at import time
+ * - Prevents mutation of canonical data (no escape prefix added)
+ * - Ensures clean data in database (no special characters)
+ * - Username in password matches stored username
  * 
- * Example:
- * - Input:  "=2+2"
- * - Output: "'=2+2"  (safe - rendered as literal text)
+ * Why Validation over Sanitization:
+ * - Sanitization adds escape prefix (') causing username/password field mismatch
+ * - Password generation uses original username, but stored username is prefixed
+ * - Rejection ensures data integrity and prevents authentication issues
  * 
  * @param field - Raw CSV field value from uploaded file
- * @returns Sanitized field safe for CSV export/import
+ * @param fieldName - Field name for error message
+ * @throws 400 - Field starts with dangerous character
  */
-const sanitizeCSVField = (field: string): string => {
-  if (!field) return field;
+const validateCSVField = (field: string, fieldName: string): void => {
+  if (!field) return;
   
   const fieldStr = String(field);
   // ⚠️ Characters that can trigger formula execution in spreadsheet applications
   const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
   
-  // Prefix with single quote to escape formula interpretation
+  // Reject dangerous input at source
   if (dangerousChars.some(char => fieldStr.startsWith(char))) {
-    return `'${fieldStr}`;
+    throw createError(
+      "failed",
+      `Invalid ${fieldName}: "${field}" - cannot start with formula characters (=, +, -, @, tab, CR)`,
+      400
+    );
   }
-  
-  return fieldStr;
 };
 
 /**
@@ -96,38 +102,47 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
 
   logger.info(filePath);
 
-  // Stream-parse CSV to avoid loading entire file into memory
-  await new Promise<void>((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (data) => {
-        console.log(data)
-        voters.push({
-          // ⚠️ SECURITY: Sanitize all fields against CSV injection
-          name: sanitizeCSVField(data.NAME),
-          username: sanitizeCSVField(data.USERNAME),
-          class: sanitizeCSVField(data.CLASS),
-          // Generate deterministic password (should be hashed in generatePassword util)
-          password: generatePassword(data.USERNAME),
-          isVoted: false,
-        });
-      })
-      .on("end", resolve)
-      .on("error", reject);
-    
-  });
+  try {
+    // Stream-parse CSV to avoid loading entire file into memory
+    await new Promise<void>((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on("data", (data) => {
+          console.log(data)
+          
+          // ⚠️ SECURITY: Validate all fields and reject CSV injection
+          validateCSVField(data.NAME, "NAME");
+          validateCSVField(data.USERNAME, "USERNAME");
+          validateCSVField(data.CLASS, "CLASS");
+          
+          voters.push({
+            name: data.NAME,
+            username: data.USERNAME,
+            class: data.CLASS,
+            // Generate deterministic password from validated username
+            password: generatePassword(data.USERNAME),
+            isVoted: false,
+          });
+        })
+        .on("end", resolve)
+        .on("error", reject);
+      
+    });
 
-  // Batch insert with ordered:true (stops on first error, maintains insertion order)
-  await voterSaveMany(voters);
-  logger.info("saved voters");
-  
-  // ⚠️ SECURITY: Clean up temporary file to prevent disk exhaustion
-  fs.unlinkSync(filePath);
+    // Batch insert with ordered:true (stops on first error, maintains insertion order)
+    await voterSaveMany(voters);
+    logger.info("saved voters");
 
-  res.status(201).json({
-    status: "success",
-    message: "Voters, successfully created",
-  });
+    res.status(201).json({
+      status: "success",
+      message: "Voters, successfully created",
+    });
+  } finally {
+    // ⚠️ SECURITY: Clean up temporary file even on error to prevent disk exhaustion
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
 });
 
 /**
@@ -143,10 +158,9 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
  * 7. Return success response
  * 
  * ⚠️ SECURITY CONSIDERATIONS:
- * - TOKEN field contains pre-generated passwords - must be sanitized to prevent injection
- * - Tokens should already be hashed externally before CSV generation
- * - If tokens are plaintext in CSV, they're exposed during upload and parsing
- * - No validation that tokens meet password complexity requirements
+ * - TOKEN field contains pre-generated passwords in plain text (by design)
+ * - Must be validated to prevent CSV injection
+ * - Tokens stored as-is in database (no hashing performed)
  * - Duplicate username/token pairs can occur (DB constraint will reject)
  * 
  * DIFFERENCE FROM uploadVoterFromCsv:
@@ -168,33 +182,42 @@ export const exportTokenizedVoterFromCSV = asyncHandler(async (req, res) => {
 
   const filePath = path.resolve(req.file.path);
 
-  await new Promise<void>((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on("data", (data) => {
-        voters.push({
-          // ⚠️ SECURITY: Sanitize all fields including pre-generated TOKEN
-          name: sanitizeCSVField(data.NAMA),
-          username: sanitizeCSVField(data.USERNAME),
-          class: sanitizeCSVField(data.KELAS),
-          password: sanitizeCSVField(data.TOKEN), // TOKEN should already be hashed
-          isVoted: false,
-        });
-      })
-      .on("end", resolve)
-      .on("error", reject);
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      fs.createReadStream(filePath)
+        .pipe(csv())
+        .on("data", (data) => {
+          // ⚠️ SECURITY: Validate all fields and reject CSV injection
+          validateCSVField(data.NAMA, "NAMA");
+          validateCSVField(data.USERNAME, "USERNAME");
+          validateCSVField(data.KELAS, "KELAS");
+          validateCSVField(data.TOKEN, "TOKEN");
+          
+          voters.push({
+            name: data.NAMA,
+            username: data.USERNAME,
+            class: data.KELAS,
+            password: data.TOKEN, // Pre-generated token validated
+            isVoted: false,
+          });
+        })
+        .on("end", resolve)
+        .on("error", reject);
+    });
 
-  await voterSaveMany(voters);
-  logger.info("saved voters");
-  
-  // ⚠️ SECURITY: Clean up temporary file containing sensitive tokens
-  fs.unlinkSync(filePath);
+    await voterSaveMany(voters);
+    logger.info("saved voters");
 
-  res.status(201).json({
-    status: "success",
-    message: "Voters, successfully created",
-  });
+    res.status(201).json({
+      status: "success",
+      message: "Voters, successfully created",
+    });
+  } finally {
+    // ⚠️ SECURITY: Clean up temporary file even on error to prevent disk exhaustion
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
 });
 
 /**

@@ -3,7 +3,6 @@ import adminRoute from "./admin.route";
 import authRoute from "./auth.routes";
 import candidateRoute from "./candidate.route";
 import voteRoute from "./vote.route";
-import { rateLimitMiddleware } from "../middlewares/rate-limit.middleware";
 
 // =============================================================================
 // V1 API ROUTER
@@ -17,11 +16,10 @@ const router = Router();
 // =============================================================================
 // RATE LIMITING
 // =============================================================================
-// ⚠️ SECURITY: Apply rate limiting to ALL v1 routes as the first middleware.
-// This provides defense-in-depth even if individual route files forget to add
-// rate limiting. Individual routes can apply stricter limits on top of this
-// baseline protection (e.g., lower limits for /auth/login to prevent brute-force).
-router.use(rateLimitMiddleware);
+// ⚠️ SECURITY: Global rate limiting applied in index.ts covers all v1 routes.
+// Individual routes can apply stricter limits on top of the baseline protection
+// if needed (e.g., lower limits for /auth/login to prevent brute-force attacks).
+// The global middleware provides defense-in-depth without double-counting requests.
 
 // =============================================================================
 // ROUTE MODULES

@@ -10,7 +10,7 @@ import {
 import path from "path";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { adminMiddleware } from "../middlewares/admin.middleware";
-import { validateDTO } from "../middlewares/validate.middleware";
+import { validateDTO, validateQueryDTO } from "../middlewares/validate.middleware";
 import { getUser, postUserCreate } from "../dtos/user.dto";
 import {
   createUser,
@@ -233,9 +233,9 @@ router.put("/reset", validateDTO(deleteResetVote), resetVote);
  * GET /admin/user
  * Retrieve all users with optional filtering/pagination
  * 
- * DTO validation on GET request validates query parameters
+ * Query parameter validation with validateQueryDTO prevents NoSQL injection
  */
-router.get("/user", validateDTO(getUser), getAllUser);
+router.get("/user", validateQueryDTO(getUser), getAllUser);
 
 /**
  * DELETE /admin/user/:id

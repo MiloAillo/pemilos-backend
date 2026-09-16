@@ -42,9 +42,9 @@ export const postUserCreate: ObjectSchema = joi.object().keys({
      // Unique identifier for login - must be between 5-30 characters
      username: joi.string().min(5).max(30).required(),
      
-     // Plain text password (will be hashed by service layer)
-     // WARNING: Consider increasing min length to 8+ and adding complexity rules
-     password: joi.string().min(5).max(30).required(),
+    // Plain text password (stored as-is, NOT hashed - by design)
+    // Length: 5-30 characters (sufficient for temporary election credentials)
+    password: joi.string().min(5).max(30).required(),
      
      // School class assignment - validated against CLASS constant
      // Previously named 'kelas' - renamed to 'class' for consistency
@@ -69,24 +69,46 @@ export type GetUser = {
 /**
  * Validation schema for user query parameters
  * 
- * All fields are optional - allows partial filtering by any combination
- * of name, pagination, vote status, class, or role
+ * All fields are optional with default values to support flexible filtering
+ * 
+ * Security Enhancements:
+ * - role: Whitelist validation (only "voter" or "admin" allowed)
+ * - page: Bounds checking (1-10000) prevents DoS via massive skip offsets
+ * - isVoted: Type validation prevents object injection
+ * - class: Enum validation against CLASS constant
+ * - stripUnknown: Removes unexpected query parameters (parameter pollution prevention)
+ * 
+ * Type Coercion (via Joi convert: true):
+ * - Query string "1" → number 1
+ * - Query string "true" → boolean true
+ * - Undefined → schema default values
  */
 export const getUser: ObjectSchema = joi.object().keys({
-     // Partial name match for search functionality
-     name: joi.string(),
-     
-     // Page number for pagination (1-indexed expected)
-     page: joi.number(),
-     
-     // Filter by whether user has already voted
-     isVoted: joi.boolean(),
-     
-     // Optional filter by school class - validated against CLASS enum
-     class: joi.string().valid(...CLASS).optional(),
-     
-     // Filter by user role
-     role: joi.string()
+    // Partial name match for search functionality
+    // Default: empty string (matches all names)
+    name: joi.string().optional().default(""),
+    
+    // Page number for pagination (1-indexed expected)
+    // Bounds: 1-10000 prevents DoS via massive MongoDB skip offsets
+    // Default: 1 (first page)
+    page: joi.number().integer().min(1).max(10000).optional().default(1),
+    
+    // Filter by whether user has already voted
+    // Type validation prevents NoSQL injection via {$exists: true}
+    // Default: undefined (no filter applied)
+    isVoted: joi.boolean().optional(),
+    
+    // Optional filter by school class - validated against CLASS enum
+    // Prevents arbitrary class names from being queried
+    class: joi.string().valid(...CLASS).optional(),
+    
+    // Filter by user role - whitelist validation prevents injection
+    // Only "voter" or "admin" allowed (no $ne, $gt, or other operators)
+    // Default: "voter" (most common use case)
+    role: joi.string().valid("voter", "admin").optional().default("voter")
+}).options({
+    // Strip unknown query parameters (security: prevents parameter pollution)
+    stripUnknown: true
 })
 
 /**

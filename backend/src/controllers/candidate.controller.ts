@@ -39,6 +39,7 @@
 import { PostCandidateCreate } from "../dtos/candidate.dto";
 import { asyncHandler } from "../middlewares/async_handler.middleware";
 import { candidateGet, candidateInsert, deleteCandidateById } from "../services/candidate.service";
+import { getPayload } from "../utils/jwt.util";
 
 /**
  * POST /admin/candidate
@@ -108,16 +109,19 @@ export const createCandidate = asyncHandler(async (req, res) => {
           number,
      } = req.body
 
+     // Extract admin user ID from JWT token for audit logging
+     const { id: adminId } = getPayload(req)
+
      // Delegate to service layer for business logic and persistence
      // Service handles:
      // - MongoDB insertion
      // - Atomic cache invalidation with version control
-     // - Audit logging
+     // - Audit logging with actual admin ID
      const result = await candidateInsert({
           name,
           label,
           number,
-     } as PostCandidateCreate)
+     } as PostCandidateCreate, adminId)
 
      // Return standardized success response with created candidate data
      // 201 Created indicates resource successfully created
@@ -273,13 +277,16 @@ export const deleteCandidate = asyncHandler(async (req, res) => {
      // Express router already parsed :id param
      const { id } = req.params
 
+     // Extract admin user ID from JWT token for audit logging
+     const { id: adminId } = getPayload(req)
+
      // Delegate to service layer for deletion and cache management
      // Service handles:
      // - Fetching candidate data for audit log
      // - MongoDB deletion
      // - Atomic cache invalidation with version control
-     // - Audit logging with candidate details
-     await deleteCandidateById(id)
+     // - Audit logging with candidate details and actual admin ID
+     await deleteCandidateById(id, adminId)
 
      // Return standardized success response
      // No data returned as resource has been deleted

@@ -106,3 +106,81 @@ export const validateDTO = (schema: ObjectSchema) => {
         next();
     };
 }
+
+/**
+ * Creates a validation middleware for query parameters (GET requests)
+ * 
+ * Similar to validateDTO but validates req.query instead of req.body
+ * 
+ * Validation flow:
+ * 1. Extract req.query
+ * 2. Convert query string values to appropriate types (Joi coercion)
+ * 3. Validate against schema
+ * 4. Reject with 400 if validation fails
+ * 5. Proceed to controller if valid
+ * 
+ * Security Benefits:
+ * - Prevents NoSQL injection via query object parameters (e.g., role[$ne]=admin)
+ * - Type checks all query parameters (prevents type confusion attacks)
+ * - Rejects unknown query parameters (stripUnknown: true prevents parameter pollution)
+ * - Bounds checking prevents DoS via large offsets/limits
+ * 
+ * Query String Coercion:
+ * - "true"/"false" → boolean
+ * - "123" → number
+ * - Undefined params → schema defaults
+ * 
+ * Example usage:
+ *   router.get('/users', validateQueryDTO(getUserSchema), getUsers);
+ * 
+ * @param schema - Joi ObjectSchema defining expected query parameters
+ * @returns Express middleware function that validates req.query
+ */
+export const validateQueryDTO = (schema: ObjectSchema) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        // Validate query parameters against schema
+        // abortEarly: false ensures we collect all validation errors
+        // stripUnknown: true removes any query params not in schema (security)
+        // convert: true enables type coercion (string "1" → number 1)
+        const result = schema.validate(req.query, {
+            abortEarly: false,
+            stripUnknown: true,
+            convert: true
+        });
+
+        if (result.error) {
+            const isProduction = process.env.NODE_ENV === 'production';
+            
+            if (isProduction) {
+                // Production: Generic error (security through obscurity)
+                res.status(400).json({
+                    status: "error",
+                    message: "Invalid query parameters. Please check your request.",
+                    errorCount: result.error.details.length
+                });
+            } else {
+                // Development: Detailed field-level errors
+                const errors = result.error.details.map(detail => ({
+                    field: detail.path.join('.'),
+                    message: detail.message
+                }));
+                res.status(400).json({
+                    status: "error",
+                    message: "Query parameter validation failed",
+                    errors: errors
+                });
+            }
+            
+            logger.debug("Query validation failed");
+            return; // Stop middleware chain
+        }
+        
+        // Replace req.query with validated and type-coerced values
+        req.query = result.value;
+        
+        logger.debug("Query validation success");
+
+        // Validation passed, proceed to next middleware/controller
+        next();
+    };
+}
