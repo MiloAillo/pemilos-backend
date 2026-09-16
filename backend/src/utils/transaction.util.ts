@@ -175,11 +175,11 @@ import mongoose, {ClientSession} from "mongoose";
  * console.log('Replica set:', status.set);
  * ```
  */
-export const execWithTransaction = async (
+export const execWithTransaction = async <T>(
      // Function parameter: accepts session and returns Promise
      // Session must be passed to ALL database operations inside this function
-     func: (session: ClientSession) => Promise<void>
-) => {
+     func: (session: ClientSession) => Promise<T>
+): Promise<T> => {
      // Start a new MongoDB session
      // Session is a lightweight object that tracks a logical sequence of operations
      const session = await mongoose.startSession()
@@ -202,6 +202,6 @@ export const execWithTransaction = async (
           // CRITICAL: Always close session to prevent memory leaks
           // Must use finally block to ensure cleanup even on errors
           // TypeScript doesn't have defer/RAII, so finally is the pattern
-          session.endSession()
+          await session.endSession()
      }
 }

@@ -1,6 +1,7 @@
 import { stat, statSync } from "fs";
 import { asyncHandler } from "../middlewares/async_handler.middleware";
 import { getVoteSettingStatus, settingToggleAllowVote } from "../services/setting.service";
+import { getPayload } from "../utils/jwt.util";
 
 /**
  * Toggle Allow Vote Controller
@@ -34,9 +35,12 @@ import { getVoteSettingStatus, settingToggleAllowVote } from "../services/settin
  * - Consider rate limiting to prevent abuse
  */
 export const toggleAllowVote = asyncHandler(async (req, res) => {
+     // Extract admin user ID from JWT token for audit logging
+     const { id: adminId } = getPayload(req);
+
      // Delegate toggle logic to service layer
-     // Service handles database transaction and state validation
-     await settingToggleAllowVote()
+     // Service handles atomic operation, Pusher notification, and audit logging
+     await settingToggleAllowVote(adminId)
 
      // Return success confirmation
      // HTTP 200 indicates successful state change

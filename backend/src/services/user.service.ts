@@ -181,7 +181,7 @@ export const userGetAll = async (req: GetUser) => {
 
     // CONDITIONAL FILTER: Add isVoted only if explicitly provided
     // Allows filtering for voted/unvoted users while defaulting to all users
-    if (req.isVoted && (req.isVoted !== undefined || req.isVoted !== null)) {
+    if (req.isVoted !== undefined && req.isVoted !== null) {
       query.isVoted = req.isVoted;
     }
 
