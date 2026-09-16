@@ -85,8 +85,8 @@ export type GetUser = {
  */
 export const getUser: ObjectSchema = joi.object().keys({
     // Partial name match for search functionality
-    // Default: empty string (matches all names)
-    name: joi.string().optional().default(""),
+    // Allow empty string to match all names when frontend sends ?name=
+    name: joi.string().allow("").optional().default(""),
     
     // Page number for pagination (1-indexed expected)
     // Bounds: 1-10000 prevents DoS via massive MongoDB skip offsets
@@ -94,13 +94,12 @@ export const getUser: ObjectSchema = joi.object().keys({
     page: joi.number().integer().min(1).max(10000).optional().default(1),
     
     // Filter by whether user has already voted
-    // Type validation prevents NoSQL injection via {$exists: true}
-    // Default: undefined (no filter applied)
-    isVoted: joi.boolean().optional(),
+    // Allow empty string / null (treated as undefined/omitted filter)
+    isVoted: joi.boolean().allow("", null).empty("").optional(),
     
     // Optional filter by school class - validated against CLASS enum
-    // Prevents arbitrary class names from being queried
-    class: joi.string().valid(...CLASS).optional(),
+    // Allow empty string / null (treated as undefined/omitted filter)
+    class: joi.string().valid(...CLASS).allow("", null).empty("").optional(),
     
     // Filter by user role - whitelist validation prevents injection
     // Only "voter" or "admin" allowed (no $ne, $gt, or other operators)

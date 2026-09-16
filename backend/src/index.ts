@@ -94,7 +94,7 @@ const corsOptions: cors.CorsOptions = {
   // Required for JWT tokens stored in httpOnly cookies
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
   // Cache preflight requests for 10 minutes to reduce OPTIONS request overhead
   maxAge: 600
 };
