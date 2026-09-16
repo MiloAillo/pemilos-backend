@@ -55,7 +55,7 @@ const sanitizeRegex = (input: string): string => {
  * @returns Promise<User> - Newly created user document with MongoDB _id
  * @throws Re-throws any database errors after logging them
  */
-export const userCreate = async (req: PostUserCreate) => {
+export const userCreate = async (req: PostUserCreate, adminId: string) => {
   try {
     // Insert user document into MongoDB collection
     const user = await User.insertOne(req);
@@ -65,7 +65,7 @@ export const userCreate = async (req: PostUserCreate) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_CREATE',
-      actor: 'system', // TODO: Replace with actual authenticated user from req.user
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       resourceId: user._id?.toString(),
@@ -80,7 +80,7 @@ export const userCreate = async (req: PostUserCreate) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_CREATE',
-      actor: 'system',
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       details: { username: req.username, name: req.name, error: (err as Error).message },
@@ -90,7 +90,7 @@ export const userCreate = async (req: PostUserCreate) => {
   }
 };
 
-export const userDeleteById = async (req: { id: string }) => {
+export const userDeleteById = async (req: { id: string }, adminId: string) => {
   try {
     const user = await User.findById(req.id).lean();
     await User.findByIdAndDelete(req.id);
@@ -98,7 +98,7 @@ export const userDeleteById = async (req: { id: string }) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_DELETE',
-      actor: 'system',
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       resourceId: req.id,
@@ -109,7 +109,7 @@ export const userDeleteById = async (req: { id: string }) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_DELETE',
-      actor: 'system',
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       resourceId: req.id,
@@ -264,7 +264,7 @@ export const userGetById = async (id: string) => {
  * @returns Promise<void> - No return value on success
  * @throws Re-throws any database errors after logging them
  */
-export const deleteUserById = async (id: string) => {
+export const deleteUserById = async (id: string, adminId: string) => {
   try {
     // Fetch user before deletion to capture metadata for audit trail
     // Uses lean() for performance since we only need data, not Mongoose document
@@ -280,7 +280,7 @@ export const deleteUserById = async (id: string) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_DELETE',
-      actor: 'system', // TODO: Replace with actual authenticated user from req.user
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       resourceId: id,
@@ -296,7 +296,7 @@ export const deleteUserById = async (id: string) => {
     logAudit({
       timestamp: new Date().toISOString(),
       action: 'USER_DELETE',
-      actor: 'system',
+      actor: adminId,
       actorRole: 'admin',
       resource: 'user',
       resourceId: id,

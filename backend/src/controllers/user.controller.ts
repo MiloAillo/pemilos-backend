@@ -7,6 +7,7 @@ import {
   userGetById,
 } from "../services/user.service";
 import { logger } from "../utils/logger.util";
+import { getPayload } from "../utils/jwt.util";
 
 /**
  * HTTP Controller: Create a new user account
@@ -50,6 +51,9 @@ export const createUser = asyncHandler(async (req, res) => {
   // 'class' renamed to 'userClass' because 'class' is a reserved keyword in JavaScript
   const { class: userClass, name, username, password, role } = req.body;
 
+  // Extract admin user ID from JWT token for audit logging
+  const { id: adminId } = getPayload(req);
+
   // Delegate to service layer for business logic and database operations
   // Service handles: validation, audit logging, error handling, database insertion
   const user = await userCreate({
@@ -58,7 +62,7 @@ export const createUser = asyncHandler(async (req, res) => {
     password,
     class: userClass,
     role,
-  } as PostUserCreate);
+  } as PostUserCreate, adminId);
 
   // Return HTTP 201 Created with standardized response format
   // Status "success" enables consistent client-side response handling
@@ -294,9 +298,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
   // Extract MongoDB ObjectId from URL path parameter
   const { id } = req.params;
 
+  // Extract admin user ID from JWT token for audit logging
+  const { id: adminId } = getPayload(req);
+
   // Delegate to service layer for deletion and audit logging
   // Service handles: fetch user metadata, execute delete, log audit trail
-  await deleteUserById(id);
+  await deleteUserById(id, adminId);
 
   // Return HTTP 200 OK with success confirmation
   // Note: Returns success even if user didn't exist (idempotent behavior)
