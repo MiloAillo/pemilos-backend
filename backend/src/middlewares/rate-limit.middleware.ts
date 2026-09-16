@@ -204,17 +204,23 @@ export const rateLimitMiddleware: MiddlewareHandler = async (req, res, next) => 
       *    - If at or over limit, return 0 (reject request)
       *    - If under limit, continue to step 4
       * 
-      * 4. ZADD: Add current timestamp to sorted set
+      * 4. Generate unique member using atomic counter:
+      *    - INCR counter key for guaranteed uniqueness
+      *    - Member format: "timestamp:counter" (e.g., "1694678400123:42")
+      *    - Prevents burst undercounting when multiple requests arrive in same millisecond
+      * 
+      * 5. ZADD: Add unique member to sorted set
       *    - Score: current timestamp (for range queries)
-      *    - Member: current timestamp (unique identifier)
-      *    - Using timestamp as both score and member ensures uniqueness
+      *    - Member: timestamp:counter (unique identifier)
+      *    - ⚠️ SECURITY: Using same timestamp for score and member caused collisions
+      *      - Old bug: ZADD key, now, now → overwrites on same-millisecond bursts
+      *      - Fix: ZADD key, now, "now:counter" → each request counted separately
       * 
-      * 5. EXPIRE: Set TTL on key to prevent memory leak
-      *    - Automatically delete key after window expires
-      *    - Handles case where user stops making requests
-      *    - TTL = WINDOW_SIZE (key expires after sliding window ends)
+      * 6. EXPIRE: Set TTL on both keys to prevent memory leak
+      *    - Main key expires after window
+      *    - Counter key expires with main key (scoped to rate limit window)
       * 
-      * 6. Return 1: Request allowed
+      * 7. Return 1: Request allowed
       * 
       * Arguments:
       * - KEYS[1]: Redis key (rate-limit:ip)
@@ -241,8 +247,13 @@ export const rateLimitMiddleware: MiddlewareHandler = async (req, res, next) => 
                return 0
           end
           
-          redis.call('ZADD', key, now, now)
+          local counter_key = key .. ':counter'
+          local counter = redis.call('INCR', counter_key)
+          local unique_member = now .. ':' .. counter
+          
+          redis.call('ZADD', key, now, unique_member)
           redis.call('EXPIRE', key, ttl)
+          redis.call('EXPIRE', counter_key, ttl)
           return 1
      `;
 
