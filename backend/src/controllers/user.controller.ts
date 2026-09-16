@@ -134,13 +134,14 @@ export const getAllUser = asyncHandler(async (req, res) => {
 
   // Delegate to service layer for query construction and execution
   // Service handles: NoSQL injection prevention, dynamic query building, pagination
+  // Note: validateQueryDTO middleware already type-coerced these values
   const users = await userGetAll({
     page,
     isVoted,
     class: userClass,
     role,
     name,
-  } as GetUser);
+  } as unknown as GetUser);
 
   // Return HTTP 200 OK with user array
   // ⚠️ TODO: Sanitize password field from users array before returning

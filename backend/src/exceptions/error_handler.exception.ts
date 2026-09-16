@@ -26,7 +26,7 @@ import { logger } from "../utils/logger.util";
  * - All errors are logged server-side regardless of environment
  * - IP addresses are logged for security auditing
  */
-export const errorHandler = (err: AppError, req: Request, res: Response, __: NextFunction) => {
+export const errorHandler = (err: AppError | Error | unknown, req: Request, res: Response, __: NextFunction) => {
     // Environment detection - determines what information is safe to expose
     const isProduction = process.env.NODE_ENV === 'production';
 
