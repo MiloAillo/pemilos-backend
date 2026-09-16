@@ -1,93 +1,56 @@
 services:
-  # frontend:
-  #   build:
-  #     context: ./pemilos-frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3001:3000"
-  #   environment:
-  #     - VITE_API_URL=${VITE_API_URL}
-  #     - VITE_PUSHER_APPID=${VITE_PUSHER_APPID}
-  #     - VITE_PUSHER_KEY=${VITE_PUSHER_KEY}
-  #     - VITE_PUSHER_SECRET=${VITE_PUSHER_SECRET}
-  #     - VITE_PUSHER_CLUSTER=${VITE_PUSHER_CLUSTER}
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - pemilos_network
-  #   depends_on:
-  #     - app
-
   app:
-    build:
-      context: .
-      dockerfile: ./backend/Dockerfile.backend
     ports:
-      - "5000:8000"
-    environment:
-      - APP_PORT=${APP_PORT}
-      - NODE_ENV=${NODE_ENV}
-      - REDIS_USERNAME=${REDIS_USERNAME}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
-      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
-      - MONGODB_HOST=${MONGODB_HOST}
-      - MONGODB_PORT=${MONGODB_PORT}
-      - MONGODB_DATABASE=${MONGODB_DATABASE}
-      - JWT_KEY=${JWT_KEY}
-    env_file:
-      - .env
+      - "${APP_PORT_EXTERNAL:-5000}:${APP_PORT:-8000}"
     networks:
       - pemilos_network
+    depends_on:
+      mongo_db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
-    ports:
-      - "6379:6379"
     networks:
       - pemilos_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   mongo_db:
     image: bitnami/mongodb
     volumes:
       - pemilos_mongo:/data/db
       - ./config/mongo:/docker-entrypoint-initdb.d
-    restart: always
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
-      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
-      - MONGODB_DATABASE=${MONGODB_DATABASE}
-      - MONGODB_PORT_NUMBER=${MONGODB_PORT}
-    env_file:
-      - .env
     networks:
       - pemilos_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   grafana:
     image: grafana/grafana-oss
     container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    networks:
-      - pemilos_network
     volumes:
       - grafana_storage:/var/lib/grafana
       - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
       - ./config/grafana:/etc/grafana/provisioning/dashboards/json:ro
+    networks:
+      - pemilos_network
 
   node_exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
-    restart: unless-stopped
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -107,23 +70,15 @@ services:
 
   mongodb_exporter:
     image: percona/mongodb_exporter:0.40.0
-    environment:
-      MONGODB_URI: mongodb://${MONGODB_ROOT_USER}:${MONGODB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}
     command: ["--collect-all", "--compatible-mode", "--discovering-mode"]
-    ports:
-      - "9216:9216"
-    restart: unless-stopped
     networks:
       - pemilos_network
-    env_file:
-      - .env
     depends_on:
       - mongo_db
 
   prometheus:
     image: prom/prometheus
     container_name: prometheus
-    restart: unless-stopped
     volumes:
       - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -133,13 +88,6 @@ services:
       - "--web.console.libraries=/etc/prometheus/console_libraries"
       - "--web.console.templates=/etc/prometheus/consoles"
       - "--web.enable-lifecycle"
-    environment:
-      MONGODB_HOST: ${MONGODB_HOST}
-      MONGODB_PORT: ${MONGODB_PORT}
-      NODE_EXPORTER_HOST: ${NODE_EXPORTER_HOST}
-      NODE_EXPORTER_PORT: ${NODE_EXPORTER_PORT}
-    env_file:
-      - .env
     expose:
       - 9090
     networks:
@@ -147,8 +95,6 @@ services:
 
   loki:
     image: grafana/loki:3.4.1
-    ports:
-      - "3100:3100"
     command: -config.file=/etc/loki/local-config.yml
     volumes:
       - ./config/loki/loki.yml:/etc/loki/local-config.yml:ro
