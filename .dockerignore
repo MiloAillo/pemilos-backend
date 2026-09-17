@@ -1,6 +1,15 @@
 **/node_modules/
 **/dist/
 .git
-Dockerfile
-docker-compose.yml
+**/.gitignore
+**/Dockerfile*
+.dockerignore
+docker-compose.*.yml
 .idea
+.env*
+!.env.example
+*.log
+backend/logs/
+backend/uploads/
+docs/
+local/
