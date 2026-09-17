@@ -5,8 +5,25 @@ services:
       dockerfile: ./backend/Dockerfile.prod
     environment:
       - NODE_ENV=production
-    env_file:
-      - .env.prod
+      - APP_PORT=${APP_PORT}
+      - JWT_KEY=${JWT_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - TRUST_PROXY=${TRUST_PROXY}
+      - WINDOW_SIZE_IN_SECONDS=${WINDOW_SIZE_IN_SECONDS}
+      - MAX_REQUESTS=${MAX_REQUESTS}
+      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PUSHER_APPID=${PUSHER_APPID}
+      - PUSHER_KEY=${PUSHER_KEY}
+      - PUSHER_SECRET=${PUSHER_SECRET}
+      - PUSHER_CLUSTER=${PUSHER_CLUSTER}
     restart: unless-stopped
     deploy:
       resources:
@@ -17,34 +34,28 @@ services:
           cpus: '0.5'
           memory: 512M
     volumes:
-      - ./backend/logs:/app/logs
-      - ./backend/uploads:/app/uploads
+      - prod_logs:/app/logs
+      - prod_uploads:/app/uploads
 
   mongo_db:
-    env_file:
-      - .env.prod
-    restart: unless-stopped
     environment:
       - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
       - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
       - MONGODB_DATABASE=${MONGODB_DATABASE}
       - MONGODB_PORT_NUMBER=${MONGODB_PORT}
+    restart: unless-stopped
 
   redis:
-    env_file:
-      - .env.prod
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     restart: unless-stopped
 
   grafana:
-    env_file:
-      - .env.prod
     restart: unless-stopped
     ports:
       - "3000:3000"
 
   prometheus:
-    env_file:
-      - .env.prod
     restart: unless-stopped
     environment:
       - MONGODB_HOST=${MONGODB_HOST}
@@ -53,27 +64,25 @@ services:
       - NODE_EXPORTER_PORT=${NODE_EXPORTER_PORT}
 
   loki:
-    env_file:
-      - .env.prod
     restart: unless-stopped
     ports:
       - "3100:3100"
 
   mongodb_exporter:
-    env_file:
-      - .env.prod
     restart: unless-stopped
     environment:
-      MONGODB_URI: mongodb://${MONGODB_ROOT_USER}:${MONGODB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}
+      - MONGODB_URI=mongodb://${MONGODB_HOST}:${MONGODB_PORT}
+      - MONGODB_USER=${MONGODB_ROOT_USER}
+      - MONGODB_PASSWORD=${MONGODB_ROOT_PASSWORD}
     ports:
       - "9216:9216"
 
   node_exporter:
-    env_file:
-      - .env.prod
     restart: unless-stopped
 
   promtail:
-    env_file:
-      - .env.prod
     restart: unless-stopped
+
+volumes:
+  prod_logs:
+  prod_uploads:
