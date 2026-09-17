@@ -176,7 +176,8 @@ export const validateQueryDTO = (schema: ObjectSchema) => {
         }
         
         // Replace req.query with validated and type-coerced values
-        req.query = result.value;
+        // Express 5.x made req.query immutable, use res.locals instead
+        res.locals.validatedQuery = result.value;
         
         logger.debug("Query validation success");
 
