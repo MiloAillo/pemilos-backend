@@ -4,11 +4,11 @@ WORKDIR /build
 
 COPY ./backend/package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci
 
 COPY ./backend ./
 
-RUN npm run build
+RUN npm run build && npm prune --omit=dev
 
 FROM node:alpine
 
@@ -17,9 +17,6 @@ WORKDIR /app
 COPY --from=builder ./build/package*.json ./
 COPY --from=builder ./build/dist ./dist
 COPY --from=builder ./build/node_modules ./node_modules
-
-# Copy .env.prod into container
-COPY .env.prod ./
 
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads && chmod -R 755 /app/uploads
 RUN mkdir -p /app/logs && chown -R node:node /app/logs && chmod -R 755 /app/logs
