@@ -1,6 +1,6 @@
 DOCKER_COMPOSE := docker compose
-COMPOSE_DEV := -f docker-compose.yml -f docker-compose.dev.yml
-COMPOSE_PROD := -f docker-compose.yml -f docker-compose.prod.yml
+COMPOSE_DEV := --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml
+COMPOSE_PROD := --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml
 
 # ANSI color codes
 CYAN := \033[0;36m
@@ -367,8 +367,18 @@ prod-top:
 prod-backup:
 	@echo "$(CYAN)Creating MongoDB backup...$(RESET)"
 	@mkdir -p ./backups
-	@$(DOCKER_COMPOSE) $(COMPOSE_PROD) exec -T mongo_db mongodump --archive > ./backups/mongodb-backup-$$(date +%Y%m%d_%H%M%S).archive
-	@echo "$(GREEN)Backup created in ./backups/$(RESET)"
+	@MONGODB_USER=$$(grep ^MONGODB_ROOT_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	MONGODB_PASS=$$(grep ^MONGODB_ROOT_PASSWORD .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	$(DOCKER_COMPOSE) $(COMPOSE_PROD) exec -T mongo_db mongodump \
+		--authenticationDatabase admin \
+		--username "$$MONGODB_USER" \
+		--password "$$MONGODB_PASS" \
+		--archive > ./backups/mongodb-backup-$$(date +%Y%m%d_%H%M%S).archive
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)Backup created in ./backups/$(RESET)"; \
+	else \
+		echo "$(RED)Backup failed$(RESET)"; exit 1; \
+	fi
 
 .PHONY: prod-health
 prod-health:
@@ -376,7 +386,9 @@ prod-health:
 	@$(DOCKER_COMPOSE) $(COMPOSE_PROD) ps
 	@echo ""
 	@echo "$(BLUE)API health check:$(RESET)"
-	@curl -s http://localhost:5000/health || echo "$(RED)API not responding$(RESET)"
+	@APP_PORT_EXT=$$(grep ^APP_PORT_EXTERNAL .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	APP_PORT_EXT=$${APP_PORT_EXT:-5000}; \
+	curl -s http://localhost:$$APP_PORT_EXT/health || echo "$(RED)API not responding$(RESET)"
 
 ###################
 # General
