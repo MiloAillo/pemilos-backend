@@ -3,6 +3,7 @@ import { errorHandler } from "./exceptions/error_handler.exception";
 import { rateLimitMiddleware } from "./middlewares/rate-limit.middleware";
 import { connectToMongoose } from "./configs/db.config";
 import v1Route from "./routes/v1.route";
+import healthRoute from "./routes/health.route";
 import { logger } from "./utils/logger.util";
 import dotenv from "dotenv";
 import path from "path";
@@ -15,18 +16,21 @@ const cookieParser = require('cookie-parser')
 // =============================================================================
 // ENVIRONMENT CONFIGURATION
 // =============================================================================
-// Load environment-specific configuration before any other initialization.
-// Production uses .env, while development uses .env.dev to allow different
-// database connections, API keys, and security settings per environment.
-if (!process.env.NODE_ENV) {
-  console.error('FATAL: NODE_ENV environment variable must be set before starting the application');
-  process.exit(1);
+// Load .env file for local non-Docker development only.
+// Docker environments inject vars via env_file in docker-compose.
+// This serves as a fallback when critical vars are missing (indicating local run).
+if (!process.env.NODE_ENV || !process.env.APP_PORT) {
+  const NODE_ENV = process.env.NODE_ENV || 'development';
+  const envFile = NODE_ENV === 'production' ? '.env.prod' : '.env.dev';
+  const envPath = path.resolve(__dirname, "../../", envFile);
+  dotenv.config({ path: envPath });
+  
+  // After loading, re-check NODE_ENV
+  if (!process.env.NODE_ENV) {
+    console.error('FATAL: NODE_ENV environment variable must be set before starting the application');
+    process.exit(1);
+  }
 }
-
-const NODE_ENV = process.env.NODE_ENV;
-const envFile = NODE_ENV === 'production' ? '.env' : '.env.dev';
-const envPath = path.resolve(__dirname, "../../", envFile);
-dotenv.config({ path: envPath });
 
 // =============================================================================
 // ENVIRONMENT VALIDATION
@@ -151,6 +155,10 @@ app.use(rateLimitMiddleware);
 // =============================================================================
 // ROUTE REGISTRATION
 // =============================================================================
+// Health check endpoint (root level, not versioned)
+// Used by Docker health checks, Kubernetes probes, and load balancers
+app.use("/health", healthRoute);
+
 // Mount all v1 API routes under /api/v1/ namespace for versioning.
 // This allows v2 routes to coexist without breaking existing clients.
 app.use("/api/v1/", v1Route);
