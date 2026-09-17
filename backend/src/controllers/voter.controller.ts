@@ -105,24 +105,29 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
   try {
     // Stream-parse CSV to avoid loading entire file into memory
     await new Promise<void>((resolve, reject) => {
-      fs.createReadStream(filePath)
+      const stream = fs.createReadStream(filePath)
         .pipe(csv())
         .on("data", (data) => {
           console.log(data)
           
-          // ⚠️ SECURITY: Validate all fields and reject CSV injection
-          validateCSVField(data.NAME, "NAME");
-          validateCSVField(data.USERNAME, "USERNAME");
-          validateCSVField(data.CLASS, "CLASS");
-          
-          voters.push({
-            name: data.NAME,
-            username: data.USERNAME,
-            class: data.CLASS,
-            // Generate deterministic password from validated username
-            password: generatePassword(data.USERNAME),
-            isVoted: false,
-          });
+          try {
+            // ⚠️ SECURITY: Validate all fields and reject CSV injection
+            validateCSVField(data.NAME, "NAME");
+            validateCSVField(data.USERNAME, "USERNAME");
+            validateCSVField(data.CLASS, "CLASS");
+            
+            voters.push({
+              name: data.NAME,
+              username: data.USERNAME,
+              class: data.CLASS,
+              // Generate deterministic password from validated username
+              password: generatePassword(data.USERNAME),
+              isVoted: false,
+            });
+          } catch (error) {
+            // Destroy stream on validation error to trigger .on("error")
+            stream.destroy(error as Error);
+          }
         })
         .on("end", resolve)
         .on("error", reject);
@@ -184,22 +189,31 @@ export const exportTokenizedVoterFromCSV = asyncHandler(async (req, res) => {
 
   try {
     await new Promise<void>((resolve, reject) => {
-      fs.createReadStream(filePath)
+      const stream = fs.createReadStream(filePath)
         .pipe(csv())
         .on("data", (data) => {
-          // ⚠️ SECURITY: Validate all fields and reject CSV injection
-          validateCSVField(data.NAMA, "NAMA");
-          validateCSVField(data.USERNAME, "USERNAME");
-          validateCSVField(data.KELAS, "KELAS");
-          validateCSVField(data.TOKEN, "TOKEN");
-          
-          voters.push({
-            name: data.NAMA,
-            username: data.USERNAME,
-            class: data.KELAS,
-            password: data.TOKEN, // Pre-generated token validated
-            isVoted: false,
-          });
+          try {
+            // ⚠️ SECURITY: Validate all fields and reject CSV injection
+            validateCSVField(data.NAMA, "NAMA");
+            validateCSVField(data.USERNAME, "USERNAME");
+            validateCSVField(data.KELAS, "KELAS");
+            validateCSVField(data.TOKEN, "TOKEN");
+            
+            voters.push({
+              name: data.NAMA,
+              username: data.USERNAME,
+              class: data.KELAS,
+              password: data.TOKEN,
+              isVoted: false,
+            });
+          } catch (error) {
+            // Destroy stream on validation error to trigger .on("error")
+            stream.destroy(error as Error);
+          }
+        })
+        .on("end", resolve)
+        .on("error", reject);
+    });
         })
         .on("end", resolve)
         .on("error", reject);
