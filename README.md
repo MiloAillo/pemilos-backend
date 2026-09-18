@@ -390,7 +390,7 @@ MONGODB_ROOT_USER=admin
 MONGODB_ROOT_PASSWORD=your-mongodb-password
 MONGODB_HOST=mongo_db
 MONGODB_PORT=27017
-MONGODB_DATABASE=pemilos
+MONGODB_DATABASE=pemilom
 
 # Pusher Configuration (get from https://pusher.com)
 PUSHER_APPID=your-pusher-app-id
@@ -530,12 +530,38 @@ Prometheus runs on port 9090 and collects:
 - Node Exporter (CPU, memory, disk, network)
 - MongoDB Exporter (database metrics)
 
+**Scrape Configuration:**
+| Job | Target | Interval | Purpose |
+|-----|--------|----------|---------|
+| prometheus | localhost:9090 | 30s | Self-monitoring |
+| node | node-exporter:9100 | 30s | System metrics |
+| mongodb | mongo-exporter:9216 | 30s | Database metrics |
+| app | app:8000/metrics | **10s** | Application metrics |
+
+**Data Retention:** 7 days
+
 **Access:** http://localhost:9090
+
+**Example PromQL Queries:**
+
+```promql
+# Request rate (requests per second)
+rate(http_requests_total[5m])
+
+# Vote rate (votes per minute)
+rate(votes_submitted_total[1m]) * 60
+
+# Error rate (percentage)
+rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
+
+# P95 latency (seconds)
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+```
 
 ### 9.2 Grafana Dashboards
 
 Grafana runs on port 3000 with pre-configured dashboards:
-- **Pemilos Dashboard**: Application metrics visualization
+- **Pemilom Dashboard**: Application metrics visualization
 - **Node Exporter**: System resource usage
 - **MongoDB Exporter**: Database performance
 
@@ -551,7 +577,41 @@ Loki runs on port 3100 and aggregates logs from:
 
 **Access:** http://localhost:3100
 
-### 9.4 Service Health Checks
+**Example LogQL Queries:**
+
+```logql
+# Get all application logs with ERROR level
+{job="pemilom"} |= "ERROR"
+
+# Filter by specific error message
+{job="pemilom"} |= "vote failed"
+
+# Get logs from the last hour
+{job="pemilom"} | json | level="error"
+```
+
+### 9.4 Winston Application Logs
+
+Application logs are stored in `/src/logs` with the following configuration:
+
+| Setting | Value |
+|---------|-------|
+| **Rotation Pattern** | Hourly (YYYY-MM-DD-HH) |
+| **Max File Size** | 20MB per file |
+| **Retention** | 7 days |
+| **Compression** | .gz (after rotation) |
+
+**File Naming Convention:**
+```
+app-2026-09-18-08.log      # Current hour (uncompressed)
+app-2026-09-18-07.log.gz   # Previous hours (compressed)
+app-2026-09-18-06.log.gz
+...
+```
+
+**Log Levels:** error, warn, info, debug
+
+### 9.5 Service Health Checks
 
 ```bash
 # Check all services
@@ -656,6 +716,33 @@ curl -X POST http://localhost:5000/api/v1/vote \
 | GET | `/api/v1/admin/user/:id` | Get user by ID | Admin |
 | DELETE | `/api/v1/admin/user/:id` | Delete user | Admin |
 
+### 10.7 Metrics Endpoint
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/metrics` | Prometheus metrics | **No** |
+
+**Example Request:**
+```bash
+curl http://localhost:5000/metrics
+```
+
+**Response (Prometheus format):**
+```
+# HELP http_requests_total Total HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="POST",status_code="200",endpoint="/api/v1/vote"} 142
+
+# HELP http_request_duration_seconds HTTP request duration
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{le="0.1"} 89
+http_request_duration_seconds_bucket{le="0.5"} 134
+
+# HELP votes_submitted_total Total votes submitted
+# TYPE votes_submitted_total counter
+votes_submitted_total 71
+```
+
 ---
 
 ## 11. Documentation & References
@@ -675,6 +762,41 @@ curl -X POST http://localhost:5000/api/v1/vote \
 2. Go to File > Import
 3. Select `docs/API/Pemilos-Backend.postman_collection.json`
 4. Select appropriate environment file
+
+### 11.6 Available Application Metrics
+
+The application exposes the following Prometheus metrics:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `http_requests_total` | Counter | Total HTTP requests by method, status, endpoint |
+| `http_request_duration_seconds` | Histogram | HTTP request duration in seconds |
+| `votes_submitted_total` | Counter | Total votes submitted |
+| `authenticated_users_active` | Gauge | Number of currently authenticated users |
+| `mongo_operations_total` | Counter | MongoDB operations by type (insert, update, query, delete) |
+| `redis_operations_total` | Counter | Redis operations by type (get, set, del) |
+
+**Example PromQL Queries:**
+
+```promql
+# Request rate by endpoint
+rate(http_requests_total[5m])
+
+# Error rate by status code
+rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
+
+# P95 latency
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Votes per minute
+rate(votes_submitted_total[1m]) * 60
+
+# Active MongoDB query operations
+mongo_operations_total{operation="query"}
+
+# Redis hit rate
+rate(redis_operations_total{operation="get"}[5m])
+```
 
 ---
 
@@ -698,6 +820,62 @@ The system implements multiple layers of security:
 ### 12.2 Critical Security Notes
 
 - **Password Storage**: All passwords are stored without hashing
+
+### 12.9 Redis ACL Security
+
+The system uses Redis ACL (Access Control List) to restrict commands available to the application.
+
+**redis.conf Configuration:**
+
+```redis
+# Define admin user with full access
+user admin on >adminpassword ~* +@all
+
+# Define app user with restricted access
+user appuser on >apppassword ~* +@read +@write +@list +@set +@sortedset +@hash +@string +@bitmap +@hyperloglog +@stream -@dangerous
+
+# Denied commands for appuser
+acl deny command FLUSHALL, FLUSHDB, CONFIG, SCRIPT, SHUTDOWN, DEBUG, BGSAVE, BGREWRITEAOF, SAVE, LASTSAVE, MONITOR, SLAVEOF, REPLICAOF, SHOW, MEMORY, FAILOVER
+```
+
+**User Roles:**
+
+| User | Permissions | Denied Commands |
+|------|-------------|-----------------|
+| `admin` | Full access (+@all) | None |
+| `appuser` | Read/Write only | FLUSHALL, FLUSHDB, CONFIG, SCRIPT, SHUTDOWN, DEBUG, BGSAVE, BGREWRITEAOF, SAVE, LASTSAVE, MONITOR, SLAVEOF, REPLICAOF, SHOW, MEMORY, FAILOVER |
+
+**Setup Instructions:**
+
+1. Enable ACL in redis.conf:
+```redis
+aclfile /usr/local/etc/redis-users.acl
+```
+
+2. Create the ACL file with the user definitions above
+
+3. Restart Redis to load the ACL rules
+
+4. Configure environment variables:
+```bash
+REDIS_USERNAME=appuser
+REDIS_PASSWORD=apppassword
+```
+
+**Testing Commands:**
+
+```bash
+# Test connection with appuser
+redis-cli -u redis://appuser:apppassword@localhost:6379 PING
+
+# Verify denied commands
+redis-cli -u redis://appuser:apppassword@localhost:6379 FLUSHALL
+# Should return: (error) NOPERM this user has no permissions to run the 'flushall' command
+
+# Verify allowed operations work
+redis-cli -u redis://appuser:apppassword@localhost:6379 SET testkey testvalue
+# Should return: OK
+```
 
 ---
 
