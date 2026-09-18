@@ -109,9 +109,8 @@ export const getUser: ObjectSchema = joi.object().keys({
     page: joi.number().integer().min(1).max(10000).optional().default(1),
     
     // Filter by whether user has already voted
-    // Type validation prevents NoSQL injection via {$exists: true}
-    // Default: undefined (no filter applied)
-    isVoted: joi.boolean().optional(),
+    // Allow empty string / null (treated as undefined/omitted filter)
+    isVoted: joi.boolean().allow("", null).empty("").optional(),
     
     // Optional filter by school class - validated against CLASS enum
     // Empty string allowed to indicate "no class filter"
