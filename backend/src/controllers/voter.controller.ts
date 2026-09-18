@@ -214,10 +214,6 @@ export const exportTokenizedVoterFromCSV = asyncHandler(async (req, res) => {
         .on("end", resolve)
         .on("error", reject);
     });
-        })
-        .on("end", resolve)
-        .on("error", reject);
-    });
 
     await voterSaveMany(voters);
     logger.info("saved voters");
