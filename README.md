@@ -988,7 +988,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-### Added
+#### Added
+
+- **Monitoring & Observability**
+  - Prometheus metrics middleware with 6 custom metrics (HTTP requests, duration, vote operations, voter lookups, auth attempts, errors)
+  - Grafana application dashboard with 10 monitoring panels optimized for election day
+  - Winston daily log rotation (hourly, 20MB max, 7-day retention, gzip compression)
+  - Promtail integration for shipping logs to Loki with `job="pemilom"` label
+  - `/metrics` endpoint for Prometheus scraping
+  - Health check endpoints: `/health` (root) and `/api/v1/health`
+
+- **Security Enhancements**
+  - Redis ACL configuration with role-based access (`appuser` with restricted commands, `admin` with full access)
+  - `REDIS_USERNAME` and `REDIS_PASSWORD` environment variables for authenticated connections
+  - Default Redis user disabled for security
+  - Runtime validation for required credentials (Pusher, Redis username)
+
+- **Documentation**
+  - Comprehensive monitoring section in README (Prometheus, Grafana, Loki)
+  - Redis ACL setup and testing instructions
+  - Postman collection updated with `/metrics` endpoint in "Monitoring" folder
+  - Service health check documentation
+
+#### Changed
+
+- **Infrastructure Configuration**
+  - Prometheus retention reduced to 7 days (optimized for small production environment)
+  - Prometheus scrape interval set to 10 seconds for real-time election monitoring
+  - Grafana dashboard refresh rate set to 5 seconds for active monitoring
+  - Docker Compose: Added Grafana dashboard provisioning with `app-dashboard.json` as default
+
+- **Logging Improvements**
+  - Replaced basic Winston file transport with `winston-daily-rotate-file`
+  - Log files now rotate hourly with automatic compression and cleanup
+  - Structured logging format for better Loki parsing
+  - Removed console.log statements from production code (voter.service.ts, voter.controller.ts)
+
+- **Dependencies**
+  - Added `prom-client@15.1.3` for Prometheus metrics
+  - Added `winston-daily-rotate-file@5.0.0` for log rotation
+
+#### Removed
+
+- Nginx reverse proxy configuration (using Cloudflare for SSL/proxy instead)
+  - Deleted `config/nginx/nginx.conf`
+  - Deleted `config/nginx/app.conf`
+  - Deleted `config/nginx/grafana.conf`
+  - Deleted `config/nginx/HOWTO.md`
+
+#### Fixed
+
+---
+
+### Previous Changes
+
+#### Added (Historical)
 
 - Postman collection and environment files for API testing
 - Sample voter CSV files
@@ -998,7 +1052,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loki and Promtail for log aggregation
 - Redlock distributed locking for anti-double-voting mechanism
 
-### Changed
+#### Changed (Historical)
 
 - API field name consistency: `class` instead of `kelas` across all user endpoints
 - JWT signature verification: Replaced `jwt.decode()` with `jwt.verify()` for proper cryptographic validation
@@ -1006,7 +1060,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - File upload security: Added MIME type and extension validation with path traversal protection
 - CORS configuration: Changed from permissive to whitelist-based origin validation
 
-### Fixed
+#### Fixed (Historical)
 
 - JWT signature verification bypass vulnerability
 - Race condition in voting logic with Redlock
