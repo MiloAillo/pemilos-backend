@@ -367,18 +367,15 @@ prod-top:
 prod-backup:
 	@echo "$(CYAN)Creating MongoDB backup...$(RESET)"
 	@mkdir -p ./backups
-	@MONGODB_USER=$$(grep ^MONGODB_ROOT_USER .env.prod | cut -d '=' -f2 | tr -d '\r'); \
-	MONGODB_PASS=$$(grep ^MONGODB_ROOT_PASSWORD .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	@MONGODB_USER=$$(grep ^MONGODB_ROOT_USER .env.prod | cut -d '=' -f2- | tr -d '\r'); \
+	MONGODB_PASS=$$(grep ^MONGODB_ROOT_PASSWORD .env.prod | cut -d '=' -f2- | tr -d '\r'); \
 	$(DOCKER_COMPOSE) $(COMPOSE_PROD) exec -T mongo_db mongodump \
 		--authenticationDatabase admin \
 		--username "$$MONGODB_USER" \
 		--password "$$MONGODB_PASS" \
-		--archive > ./backups/mongodb-backup-$$(date +%Y%m%d_%H%M%S).archive
-	@if [ $$? -eq 0 ]; then \
-		echo "$(GREEN)Backup created in ./backups/$(RESET)"; \
-	else \
-		echo "$(RED)Backup failed$(RESET)"; exit 1; \
-	fi
+		--archive > ./backups/mongodb-backup-$$(date +%Y%m%d_%H%M%S).archive && \
+	echo "$(GREEN)Backup created in ./backups/$(RESET)" || \
+	{ echo "$(RED)Backup failed$(RESET)"; exit 1; }
 
 .PHONY: prod-health
 prod-health:
@@ -386,7 +383,7 @@ prod-health:
 	@$(DOCKER_COMPOSE) $(COMPOSE_PROD) ps
 	@echo ""
 	@echo "$(BLUE)API health check:$(RESET)"
-	@APP_PORT_EXT=$$(grep ^APP_PORT_EXTERNAL .env.prod | cut -d '=' -f2 | tr -d '\r'); \
+	@APP_PORT_EXT=$$(grep ^APP_PORT_EXTERNAL .env.prod | cut -d '=' -f2- | tr -d '\r'); \
 	APP_PORT_EXT=$${APP_PORT_EXT:-5000}; \
 	curl -s http://localhost:$$APP_PORT_EXT/health || echo "$(RED)API not responding$(RESET)"
 
