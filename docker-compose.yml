@@ -18,7 +18,14 @@ services:
     networks:
       - pemilos_network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: >
+        sh -c '
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          redis-cli --pass "$$REDIS_PASSWORD" ping
+        else
+          redis-cli ping
+        fi
+        '
       interval: 5s
       timeout: 3s
       retries: 5

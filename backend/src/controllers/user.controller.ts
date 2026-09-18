@@ -134,7 +134,7 @@ export const getAllUser = asyncHandler(async (req, res) => {
     class: userClass, // string (CLASS enum) | undefined
     role,           // "voter" | "admin", default: "voter"
     name,           // string, default: ""
-  } = req.query;
+  } = res.locals.validatedQuery as GetUser;
 
   // Delegate to service layer for query construction and execution
   // Service handles: NoSQL injection prevention, dynamic query building, pagination
@@ -145,7 +145,7 @@ export const getAllUser = asyncHandler(async (req, res) => {
     class: userClass,
     role,
     name,
-  } as unknown as GetUser);
+  });
 
   // Return HTTP 200 OK with user array
   // ⚠️ TODO: Sanitize password field from users array before returning

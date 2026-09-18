@@ -175,16 +175,9 @@ export const validateQueryDTO = (schema: ObjectSchema) => {
             return; // Stop middleware chain
         }
         
-        // Replace req.query properties with validated and type-coerced values
-        // Note: In Express 5 / modern Node, req.query is a getter-only property on IncomingMessage,
-        // so direct assignment (req.query = result.value) throws TypeError.
-        // Instead, we mutate the existing object or redefine the property.
-        Object.defineProperty(req, 'query', {
-            value: result.value,
-            writable: true,
-            enumerable: true,
-            configurable: true
-        });
+        // Replace req.query with validated and type-coerced values
+        // Express 5.x made req.query immutable, use res.locals instead
+        res.locals.validatedQuery = result.value;
         
         logger.debug("Query validation success");
 

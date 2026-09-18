@@ -169,9 +169,8 @@ export const userGetAll = async (req: GetUser) => {
     const limit = 100;
 
     // DYNAMIC QUERY CONSTRUCTION
-    // Base query with required fields (role and name pattern)
+    // Base query with required fields (name pattern only)
     const query: any = {
-      role: req.role, // Filter by user role (voter, admin, etc.)
       // SECURITY: Sanitize name input to prevent NoSQL injection via regex
       name: {
         $regex: sanitizeRegex(req.name), // Escaped user input for safe regex matching
@@ -179,15 +178,22 @@ export const userGetAll = async (req: GetUser) => {
       },
     };
 
+    // CONDITIONAL FILTER: Add role only if explicitly provided and not empty
+    // Empty string means "no role filter" (return all roles)
+    if (req.role && req.role !== "") {
+      query.role = req.role; // Filter by user role (voter, admin, etc.)
+    }
+
     // CONDITIONAL FILTER: Add isVoted only if explicitly provided
     // Allows filtering for voted/unvoted users while defaulting to all users
     if (req.isVoted !== undefined && req.isVoted !== null) {
       query.isVoted = req.isVoted;
     }
 
-    // CONDITIONAL FILTER: Add class only if provided
+    // CONDITIONAL FILTER: Add class only if provided and not empty
+    // Empty string means "no class filter" (return all classes)
     // Enables filtering by student class (e.g., "10A", "11B") when needed
-    if (req.class) {
+    if (req.class && req.class !== "") {
       query.class = req.class;
     }
 

@@ -55,37 +55,52 @@ export const postUserCreate: ObjectSchema = joi.object().keys({
 })
 
 /**
- * DTO for user query/filter parameters
- * All fields are optional to support flexible filtering
+ * DTO for query parameters when fetching users with filters
+ * 
+ * All fields are optional to support flexible querying:
+ * - Omitted fields = no filter applied for that field
+ * - Empty string ("") = explicit "no filter" (returns all values for that field)
+ * 
+ * Examples:
+ * - ?role=voter          → Only voters
+ * - ?role=               → All roles (empty string means no filter)
+ * - (no role param)      → All roles (undefined means no filter)
  */
 export type GetUser = {
-     name: string
-     page: number,
-     isVoted: boolean,
-     class?: string, // Optional filter by school class
-     role: "voter" | "admin"
+     name?: string,
+     page?: number,
+     isVoted?: boolean,
+     class?: string | "", // Optional filter by school class, empty string allowed
+     role?: "voter" | "admin" | ""  // Empty string allowed for "no filter"
 }
 
 /**
  * Validation schema for user query parameters
  * 
- * All fields are optional with default values to support flexible filtering
+ * All fields are optional to support flexible filtering
+ * Empty strings are allowed to indicate "no filter" (frontend requirement)
  * 
  * Security Enhancements:
- * - role: Whitelist validation (only "voter" or "admin" allowed)
+ * - role: Whitelist validation (only "voter", "admin", or "" allowed)
  * - page: Bounds checking (1-10000) prevents DoS via massive skip offsets
  * - isVoted: Type validation prevents object injection
- * - class: Enum validation against CLASS constant
+ * - class: Enum validation against CLASS constant, empty string allowed
  * - stripUnknown: Removes unexpected query parameters (parameter pollution prevention)
  * 
  * Type Coercion (via Joi convert: true):
  * - Query string "1" → number 1
  * - Query string "true" → boolean true
  * - Undefined → schema default values
+ * 
+ * Empty String Behavior (Frontend Requirement):
+ * - Empty strings ("") in query parameters indicate "no filter"
+ * - Example: ?class=&role= means "return all classes and roles"
+ * - Service layer must handle empty strings by omitting those filters
  */
 export const getUser: ObjectSchema = joi.object().keys({
     // Partial name match for search functionality
-    // Allow empty string to match all names when frontend sends ?name=
+    // Empty string allowed (matches all names)
+    // Default: empty string (no name filter)
     name: joi.string().allow("").optional().default(""),
     
     // Page number for pagination (1-indexed expected)
@@ -98,13 +113,15 @@ export const getUser: ObjectSchema = joi.object().keys({
     isVoted: joi.boolean().allow("", null).empty("").optional(),
     
     // Optional filter by school class - validated against CLASS enum
-    // Allow empty string / null (treated as undefined/omitted filter)
-    class: joi.string().valid(...CLASS).allow("", null).empty("").optional(),
+    // Empty string allowed to indicate "no class filter"
+    // Prevents arbitrary class names from being queried
+    class: joi.string().valid(...CLASS, "").optional(),
     
     // Filter by user role - whitelist validation prevents injection
-    // Only "voter" or "admin" allowed (no $ne, $gt, or other operators)
-    // Default: "voter" (most common use case)
-    role: joi.string().valid("voter", "admin").optional().default("voter")
+    // Empty string allowed to indicate "no role filter"
+    // Only "voter", "admin", or "" (no filter) allowed
+    // Default: undefined (no default role filter - returns all roles)
+    role: joi.string().valid("voter", "admin", "").optional()
 }).options({
     // Strip unknown query parameters (security: prevents parameter pollution)
     stripUnknown: true

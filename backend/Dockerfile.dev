@@ -18,11 +18,8 @@ COPY --from=builder ./build/package*.json ./
 COPY --from=builder ./build/dist ./dist
 COPY --from=builder ./build/node_modules ./node_modules
 
-# Copy .env.dev into container
-COPY .env.dev ./
-
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads && chmod -R 777 /app/uploads
-RUN mkdir -p /app/logs && chown -R node:node /app/logs
+RUN mkdir -p /app/logs && chown -R node:node /app/logs && chmod -R 777 /app/logs
 
 USER node
 
