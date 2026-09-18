@@ -180,7 +180,7 @@ export const userGetAll = async (req: GetUser) => {
 
     // CONDITIONAL FILTER: Add role only if explicitly provided and not empty
     // Empty string means "no role filter" (return all roles)
-    if (req.role && req.role !== "") {
+    if (req.role !== undefined && req.role !== "") {
       query.role = req.role; // Filter by user role (voter, admin, etc.)
     }
 
