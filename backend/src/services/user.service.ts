@@ -169,15 +169,17 @@ export const userGetAll = async (req: GetUser) => {
     const limit = 100;
 
     // DYNAMIC QUERY CONSTRUCTION
-    // Base query with required fields (role and name pattern)
     const query: any = {
       role: req.role, // Filter by user role (voter, admin, etc.)
-      // SECURITY: Sanitize name input to prevent NoSQL injection via regex
-      name: {
+    };
+
+    // CONDITIONAL FILTER: Add name regex search only if non-empty string provided
+    if (req.name && req.name.trim() !== "") {
+      query.name = {
         $regex: sanitizeRegex(req.name), // Escaped user input for safe regex matching
         $options: "i", // Case-insensitive search
-      },
-    };
+      };
+    }
 
     // CONDITIONAL FILTER: Add isVoted only if explicitly provided
     // Allows filtering for voted/unvoted users while defaulting to all users
@@ -192,8 +194,7 @@ export const userGetAll = async (req: GetUser) => {
     }
 
     // EXECUTE QUERY with filters, pagination, and field projection
-    const users = await User.find()
-      .where(query) // Apply dynamic filters
+    const users = await User.find(query)
       .select("name class username _id isVoted password role") // ⚠️ SECURITY ISSUE: password should NOT be selected
       .skip(skip(req.page)) // Pagination: Skip previous pages
       .limit(limit) // Pagination: Limit results per page
