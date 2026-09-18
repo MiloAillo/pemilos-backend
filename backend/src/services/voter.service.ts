@@ -9,6 +9,7 @@ import debounce from "lodash/debounce";
 import { getPusherClient } from "../configs/pusher.config";
 import { Candidate } from "../models/candidate.model";
 import { fileLogger, logger } from "../utils/logger.util";
+import { votesSubmittedTotal } from "../middlewares/metrics.middleware";
 
 /**
  * Batch Insert Voters into Database
@@ -211,6 +212,10 @@ export const voterSaveVote = async (req: PostInsertVote, userId: string) => {
     
     // Mark user as voted (prevents future vote attempts)
     await User.findByIdAndUpdate(userId, { $set: { isVoted: true } });
+
+    // Increment Prometheus vote metrics
+    votesSubmittedTotal.inc({ label: 'osis' });
+    votesSubmittedTotal.inc({ label: 'mpk' });
 
     // Trigger debounced live count push to frontend (3-second debounce prevents rate limits)
     voterPushLiveCount();

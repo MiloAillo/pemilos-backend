@@ -1,6 +1,7 @@
 import express from "express";
 import { errorHandler } from "./exceptions/error_handler.exception";
 import { rateLimitMiddleware } from "./middlewares/rate-limit.middleware";
+import { metricsMiddleware, metricsEndpoint } from "./middlewares/metrics.middleware";
 import { connectToMongoose } from "./configs/db.config";
 import v1Route from "./routes/v1.route";
 import healthRoute from "./routes/health.route";
@@ -48,12 +49,23 @@ const requiredEnvVars = [
   'MONGODB_PORT',
   'REDIS_HOST',
   'REDIS_PORT',
-  'JWT_KEY'
+  'JWT_KEY',
+  'PUSHER_APPID',
+  'PUSHER_KEY',
+  'PUSHER_SECRET',
+  'PUSHER_CLUSTER'
 ];
 
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingVars.length > 0) {
   logger.error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
+
+// ⚠️ SECURITY: Production Redis ACL validation
+// Enforce REDIS_USERNAME in production to ensure ACL is configured
+if (process.env.NODE_ENV === 'production' && !process.env.REDIS_USERNAME) {
+  logger.error('REDIS_USERNAME is required in production for ACL security');
   process.exit(1);
 }
 
@@ -148,6 +160,9 @@ app.use(cookieParser());
 // Parse JSON bodies - limit size to prevent DoS via large payloads (default 100kb)
 app.use(express.json());
 
+// Metrics collection middleware (before rate limiting to track all requests)
+app.use(metricsMiddleware);
+
 // Global rate limiting applied to ALL routes as defense-in-depth.
 // Route-specific limits in v1.route.ts provide additional granular control.
 app.use(rateLimitMiddleware);
@@ -155,6 +170,9 @@ app.use(rateLimitMiddleware);
 // =============================================================================
 // ROUTE REGISTRATION
 // =============================================================================
+// Prometheus metrics endpoint (unauthenticated for scraping)
+app.get("/metrics", metricsEndpoint);
+
 // Health check endpoint (root level, not versioned)
 // Used by Docker health checks, Kubernetes probes, and load balancers
 app.use("/health", healthRoute);
