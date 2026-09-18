@@ -68,7 +68,7 @@ dev-up:
 .PHONY: dev-down
 dev-down:
 	@echo "$(YELLOW)Stopping development environment...$(RESET)"
-	@$(DOCKER_COMPOSE) $(COMPOSE_DEV) down
+	@$(DOCKER_COMPOSE) $(COMPOSE_DEV) down $(FLAGS)
 	@echo "$(GREEN)Development environment stopped!$(RESET)"
 
 .PHONY: dev-build
@@ -133,7 +133,7 @@ prod-up: prod-check-env
 .PHONY: prod-down
 prod-down:
 	@echo "$(YELLOW)Stopping production environment...$(RESET)"
-	@$(DOCKER_COMPOSE) $(COMPOSE_PROD) down
+	@$(DOCKER_COMPOSE) $(COMPOSE_PROD) down $(FLAGS)
 	@echo "$(GREEN)Production environment stopped!$(RESET)"
 
 .PHONY: prod-build
