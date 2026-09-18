@@ -67,8 +67,8 @@ export const postUserCreate: ObjectSchema = joi.object().keys({
  * - (no role param)      → All roles (undefined means no filter)
  */
 export type GetUser = {
-     name?: string,
-     page?: number,
+     name: string,
+     page: number,
      isVoted?: boolean,
      class?: string | "", // Optional filter by school class, empty string allowed
      role?: "voter" | "admin" | ""  // Empty string allowed for "no filter"
