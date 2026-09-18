@@ -9,6 +9,7 @@ docker-compose.*.yml
 .env*
 !.env.example
 *.log
+README.md
 backend/logs/
 backend/uploads/
 docs/
