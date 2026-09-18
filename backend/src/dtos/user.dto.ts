@@ -55,15 +55,23 @@ export const postUserCreate: ObjectSchema = joi.object().keys({
 })
 
 /**
- * DTO for user query/filter parameters
- * All fields are optional to support flexible filtering
+ * DTO for query parameters when fetching users with filters
+ * 
+ * All fields are optional to support flexible querying:
+ * - Omitted fields = no filter applied for that field
+ * - Empty string ("") = explicit "no filter" (returns all values for that field)
+ * 
+ * Examples:
+ * - ?role=voter          → Only voters
+ * - ?role=               → All roles (empty string means no filter)
+ * - (no role param)      → All roles (undefined means no filter)
  */
 export type GetUser = {
-     name: string
-     page: number,
-     isVoted: boolean,
-     class?: string, // Optional filter by school class
-     role: "voter" | "admin"
+     name?: string,
+     page?: number,
+     isVoted?: boolean,
+     class?: string | "", // Optional filter by school class, empty string allowed
+     role?: "voter" | "admin" | ""  // Empty string allowed for "no filter"
 }
 
 /**
