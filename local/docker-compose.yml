@@ -32,17 +32,16 @@ services:
     #   - pemilos_network
 
   local-mongo-pemilos:
-    image: bitnami/mongodb
+    image: mongo:4.4.18
     volumes:
-      - pemilos_mongo_local:/bitnami/mongodb
+      - pemilos_mongo_local:/data/db
     restart: always
     ports:
       - "27017:27017"
     environment:
-      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
-      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
-      - MONGODB_DATABASE=${MONGODB_DATABASE}
-      - MONGODB_PORT_NUMBER=${MONGODB_PORT}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE}
     env_file:
       - .env
     # networks:
