@@ -28,6 +28,7 @@
 
 import pino from "pino"
 import winston from "winston";
+import DailyRotateFile from "winston-daily-rotate-file";
 import path from "path";
 import fs from "fs";
 
@@ -89,10 +90,11 @@ try {
  * - High-frequency operational logging (use `logger` instead)
  * - Performance-critical paths (file I/O has latency)
  * 
- * FILE ROTATION CONSIDERATION:
- * - Current setup writes to a single app.log file indefinitely
- * - RECOMMENDATION: Add winston-daily-rotate-file transport for production
- * - Example config: maxSize: '20m', maxFiles: '14d' (14 days retention)
+ * FILE ROTATION IMPLEMENTATION:
+ * - Uses winston-daily-rotate-file for automatic log rotation
+ * - Hourly rotation (YYYY-MM-DD-HH) optimized for single-day election events
+ * - 20MB max per file prevents large log files
+ * - 7-day retention with compressed archives (.gz) saves disk space
  * 
  * PRODUCTION HARDENING:
  * - Implement log rotation to prevent disk exhaustion
@@ -128,13 +130,13 @@ export const fileLogger = winston.createLogger({
   
   // Transports define where logs are written
   transports: [
-    new winston.transports.File({
-      filename: path.join(logDir, "app.log"),
-      level: "info",
-      // TODO: Add rotation config for production:
-      // maxsize: 20971520, // 20MB
-      // maxFiles: 14,      // Keep 14 files (2 weeks if daily rotation)
-      // tailable: true     // Keep most recent logs in main file
+    new DailyRotateFile({
+      filename: path.join(logDir, "app-%DATE%.log"),
+      datePattern: "YYYY-MM-DD-HH",        // Hourly rotation for election day
+      maxSize: "20m",                       // Rotate at 20MB
+      maxFiles: "7d",                       // Keep 7 days of logs
+      zippedArchive: true,                  // Compress old logs (.gz)
+      auditFile: path.join(logDir, ".audit.json")  // Track rotation metadata
     }),
   ],
 });
