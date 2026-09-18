@@ -69,6 +69,12 @@ services:
     ports:
       - "9216:9216"
 
+  promtail:
+    volumes:
+      - dev_logs:/app/logs:ro
+    environment:
+      - ENVIRONMENT=development
+      
 volumes:
   dev_logs:
   dev_uploads:
