@@ -66,7 +66,7 @@ E-voting system backend for SMKN 8 Semarang school elections.
 
 Pemilos Backend is an electronic voting system designed specifically for school student council elections. The system provides secure, transparent, and real-time voting capabilities for OSIS (Organisasi Siswa Intra Sekolah) and MPK (Majelis Permusyawaratan Kelas) categories, enabling schools to conduct digital elections.
 
-The backend implements multiple security layers to ensure election integrity. JWT-based authentication validates voter identity through NISN (Nomor Induk Siswa Nasional) credentials for students, while Redis-based rate limiting prevents brute force attacks. The core anti-double-voting mechanism uses Redlock, a distributed lock implementation that prevents race conditions at the database level, combined with MongoDB constraints and application-level checks for defense in depth.
+The backend implements multiple security layers to ensure election integrity. JWT-based authentication validates voter identity through NIS (Nomor Induk Siswa) credentials for students, while Redis-based rate limiting prevents brute force attacks. The core anti-double-voting mechanism uses Redlock, a distributed lock implementation that prevents race conditions at the database level, combined with MongoDB constraints and application-level checks for defense in depth.
 
 Real-time results are delivered via Pusher WebSocket, allowing voters and administrators to see live vote counts as ballots are cast. Comprehensive monitoring with Prometheus metrics collection, Grafana dashboards, and Loki log aggregation ensures system observability in production environments. The application is containerized with Docker and orchestrated using a three-layer Docker Compose pattern that separates development and production configurations while maintaining DRY principles.
 
@@ -188,7 +188,7 @@ sequenceDiagram
 
     Note over Admin,Voter: VOTER FLOW
 
-    Voter->>API: POST /api/v1/auth/login (NISN + password)
+    Voter->>API: POST /api/v1/auth/login (NIS + password)
     API->>MongoDB: Validate credentials
     API-->>Voter: JWT issued (5min expiry)
 
@@ -670,7 +670,7 @@ curl -X POST http://localhost:5000/api/v1/auth/login \
 
 **CSV Format:**
 ```csv
-nisn,name,class,password
+nis,name,class,password
 1234567890,John Doe,XIPA1,password123
 ```
 
