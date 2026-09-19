@@ -1103,7 +1103,7 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "time() - process_start_time_seconds{job=\"app\"}",
+              "expr": "time() - nodejs_process_start_time_seconds{job=\"app\"}",
               "instant": false,
               "refId": "A"
             }
@@ -1149,9 +1149,225 @@
           "type": "stat"
         },
         {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "description": "Node.js heap memory usage",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 27},
+          "id": 26,
+          "options": {
+            "legend": {"calcs": ["last"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "pluginVersion": "10.1.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_heap_size_used_bytes{job=\"app\"}",
+              "legendFormat": "Used",
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_heap_size_total_bytes{job=\"app\"}",
+              "legendFormat": "Total",
+              "refId": "B"
+            }
+          ],
+          "title": "Node.js Heap Memory",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "description": "Event loop lag in milliseconds",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "line"}
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.05},
+                  {"color": "red", "value": 0.1}
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 27},
+          "id": 27,
+          "options": {
+            "legend": {"calcs": ["last"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "pluginVersion": "10.1.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_eventloop_lag_p50_seconds{job=\"app\"}",
+              "legendFormat": "P50",
+              "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_eventloop_lag_p90_seconds{job=\"app\"}",
+              "legendFormat": "P90",
+              "refId": "B"
+            },
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_eventloop_lag_p99_seconds{job=\"app\"}",
+              "legendFormat": "P99",
+              "refId": "C"
+            }
+          ],
+          "title": "Event Loop Lag",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "description": "Active handles and requests",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "thresholds"},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 50},
+                  {"color": "red", "value": 100}
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 12, "y": 33},
+          "id": 28,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "textMode": "auto"
+          },
+          "pluginVersion": "10.1.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "nodejs_nodejs_active_handles_total{job=\"app\"}",
+              "instant": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Active Handles",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "description": "Garbage collection pause time by type",
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "palette-classic"},
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 20,
+                "gradientMode": "none",
+                "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {"type": "linear"},
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {"group": "A", "mode": "none"},
+                "thresholdsStyle": {"mode": "off"}
+              },
+              "mappings": [],
+              "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 6, "w": 6, "x": 18, "y": 33},
+          "id": 29,
+          "options": {
+            "legend": {"calcs": ["last"], "displayMode": "list", "placement": "bottom", "showLegend": true},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          },
+          "pluginVersion": "10.1.1",
+          "targets": [
+            {
+              "editorMode": "code",
+              "expr": "rate(nodejs_nodejs_gc_duration_seconds_sum{job=\"app\"}[1m])",
+              "legendFormat": "{{kind}}",
+              "refId": "A"
+            }
+          ],
+          "title": "GC Pause Time",
+          "type": "timeseries"
+        },
+        {
           "datasource": {"type": "loki", "uid": "loki"},
           "description": "Recent error logs from application",
-          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 27},
+          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 39},
           "id": 24,
           "options": {
             "dedupStrategy": "none",
@@ -1178,7 +1394,7 @@
         {
           "datasource": {"type": "loki", "uid": "loki"},
           "description": "All recent application logs",
-          "gridPos": {"h": 12, "w": 12, "x": 0, "y": 33},
+          "gridPos": {"h": 12, "w": 12, "x": 12, "y": 39},
           "id": 25,
           "options": {
             "dedupStrategy": "none",

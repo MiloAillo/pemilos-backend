@@ -54,7 +54,8 @@ services:
       - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
       - ./config/grafana:/etc/grafana/provisioning/dashboards/json:ro
-      - ./config/grafana/app-dashboard.json:/etc/grafana/provisioning/dashboards/app/app-dashboard.json:ro
+    expose:
+      - 3000
     networks:
       - pemilos_network
 

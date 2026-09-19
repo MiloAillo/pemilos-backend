@@ -25,13 +25,15 @@
  */
 
 import { NextFunction, Request, Response } from 'express';
-import { verifyToken } from "../utils/jwt.util";
+import { verifyToken, getPayload } from "../utils/jwt.util";
 import {createError} from "../exceptions/error.exception";
 import { MiddlewareHandler } from '../utils/types.util';
 import { logger } from '../utils/logger.util';
 import jwt from "jsonwebtoken";
+import { authenticatedUsersGauge } from './metrics.middleware';
+import { getRedisClient } from '../configs/redis.config';
 
-export const authMiddleware: MiddlewareHandler = (req, res, next) => {
+export const authMiddleware: MiddlewareHandler = async (req, res, next) => {
     /**
      * STEP 1: Extract JWT token from Authorization header
      * 
@@ -78,7 +80,38 @@ export const authMiddleware: MiddlewareHandler = (req, res, next) => {
     }
 
     /**
-     * STEP 4: Token validated, proceed to next middleware/controller
+     * STEP 4: Track active user for metrics
+     * 
+     * Uses Redis sorted set to track unique active users in 5-minute window
+     * - Key: "metrics:active_users"
+     * - Score: Current timestamp
+     * - Value: User ID
+     * - Expiration: Clean up entries older than 5 minutes
+     */
+    try {
+        const payload = getPayload(req);
+        if (payload && payload.id) {
+            const redisClient = getRedisClient();
+            const now = Date.now();
+            const fiveMinutesAgo = now - (5 * 60 * 1000);
+            
+            // Add current user with timestamp as score
+            await redisClient.zadd('metrics:active_users', now, payload.id);
+            
+            // Remove users inactive for >5 minutes
+            await redisClient.zremrangebyscore('metrics:active_users', 0, fiveMinutesAgo);
+            
+            // Count unique active users and update gauge
+            const activeCount = await redisClient.zcard('metrics:active_users');
+            authenticatedUsersGauge.set(activeCount);
+        }
+    } catch (err) {
+        // Don't fail request if metrics tracking fails
+        logger.warn({ err }, 'Failed to update active users metric');
+    }
+
+    /**
+     * STEP 5: Token validated, proceed to next middleware/controller
      * 
      * Downstream handlers can extract user info from token using getPayload(req)
      * Payload contains: { id: string, role: "voter" | "admin" }
