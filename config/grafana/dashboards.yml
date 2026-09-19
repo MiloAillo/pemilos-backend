@@ -3,7 +3,7 @@ apiVersion: 1
 providers:
   - name: "Dashboard Pemilom"
     orgId: 1
-    folder: "Test"
+    folder: ""
     type: file
     disableDeletion: false
     editable: true

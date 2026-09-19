@@ -678,14 +678,74 @@ histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 
 ### 9.2 Grafana Dashboards
 
-Grafana runs on port 3000 with pre-configured dashboards:
-- **Pemilom Dashboard**: Application metrics visualization
-- **Node Exporter**: System resource usage
-- **MongoDB Exporter**: Database performance
+Grafana runs on port 3000 with a comprehensive election monitoring dashboard.
 
-**Default credentials:** admin/admin (change on first login)
+**Dashboard:** Pemilom Election Monitoring (UID: `pemilom`)
 
-**Access:** http://localhost:3000
+#### Dashboard Overview
+
+The unified dashboard provides real-time monitoring with **25 visualization panels** organized across 5 collapsible sections:
+
+**1. Election Overview** (Always Expanded - 6 Panels)
+- Total Votes, OSIS Votes, MPK Votes
+- Active Users, Votes/Minute, Error Rate
+- Critical at-a-glance metrics with color-coded thresholds
+
+**2. Application Performance** (Expanded - 5 Panels)
+- Request Rate (Top 10 Endpoints) - Timeseries
+- Request Latency (P50/P95/P99) - Multi-percentile tracking
+- Status Code Distribution - Pie chart
+- Top 5 Endpoints - Table
+- Slow Requests (>1s) - Counter
+
+**3. Database & Cache** (Collapsed - 6 Panels)
+- MongoDB: Ops/s, Connection Pool %, Query Latency, Uptime
+- Redis: Ops/s (Top 10), Memory Usage %
+
+**4. System Resources** (Collapsed - 4 Panels)
+- CPU Usage (stacked by mode)
+- Memory Usage (used, cached, swap)
+- Network Traffic (Rx/Tx)
+- Disk Space Usage
+
+**5. Service Health & Logs** (Collapsed - 4 Panels)
+- App Uptime, MongoDB Status
+- Error Logs (Last 20) via Loki
+- Application Logs (Last 50) via Loki
+
+#### Dashboard Configuration
+
+- **Refresh Rate:** 10 seconds (adjustable: 5s/10s/30s/1m/5m)
+- **Time Range:** Last 1 hour (default, configurable)
+- **Panel Types:** 10 stat, 9 timeseries, 2 gauge, 2 logs, 1 pie chart, 1 table
+
+#### Election Day Monitoring Workflow
+
+**Morning Setup (30 minutes before voting):**
+1. Open dashboard and verify all services show "UP"
+2. Check system resources have adequate headroom (CPU <70%, Memory <80%)
+3. Confirm error rate is near-zero
+4. Set time range to "Last 15 minutes" for real-time focus
+
+**During Voting (Every 5-10 Minutes):**
+1. **Quick Check:** Total votes increasing? Error rate <1%? Active users within capacity?
+2. **Deep Check:** Expand collapsed rows to verify CPU, memory, database health
+3. **On Alert:** Investigate red indicators, check logs, correlate metrics
+
+#### Troubleshooting Dashboard
+
+**Panels show "No Data":**
+- Check datasource: Configuration → Data Sources → Prometheus → Test
+- Verify metrics exist: `curl http://localhost:5000/metrics | grep http_requests_total`
+
+**Loki logs empty:**
+- Check Promtail: `docker logs pemilos-backend-promtail-1`
+- Fix volume path if needed in docker-compose.yml
+
+**Dashboard slow/high query load:**
+- Increase refresh rate from 10s to 30s
+- Collapse unused rows
+- Reduce time range from 1h to 15m
 
 ### 9.3 Loki Log Aggregation
 
