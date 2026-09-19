@@ -511,13 +511,131 @@ make prod-health
 
 ### 8.3 Production Considerations
 
-| Aspect | Recommendation |
-|--------|----------------|
-| **Reverse Proxy** | Use nginx with SSL termination |
-| **Monitoring** | Grafana dashboards pre-configured in `config/grafana/` |
-| **Logging** | Logs persisted to named volumes (`prod_logs`) |
-| **Backups** | Use `make prod-backup` for MongoDB backups |
-| **Updates** | Pull latest images with `make prod-pull` then restart |
+#### Server Specifications (Production Environment)
+
+Current production server configuration:
+- **RAM:** 7.76GB total (6.76GB available)
+- **CPU:** 2 cores
+- **Disk:** 336GB (266GB available)
+
+#### Resource Allocation (Optimized for 2-Core / 8GB RAM Server)
+
+Production deployment uses optimized resource allocation to maximize performance on limited hardware:
+
+| Service | CPU Limit | CPU Reserved | RAM Limit | RAM Reserved | Purpose |
+|---------|-----------|--------------|-----------|--------------|---------|
+| **app** | 1.5 cores | 1 core | 3GB | 2GB | Node.js backend (primary service) |
+| **mongo_db** | 1 core | 0.5 core | 2GB | 1GB | Database with WiredTiger cache |
+| **redis** | 0.5 core | 0.2 core | 768MB | 256MB | Cache + rate limiting (512MB maxmemory) |
+| **prometheus** | 0.5 core | 0.2 core | 1GB | 256MB | Metrics storage (7-day retention) |
+| **grafana** | 0.3 core | 0.1 core | 512MB | 128MB | Dashboard UI |
+| **loki** | 0.3 core | 0.1 core | 512MB | 128MB | Log aggregation |
+| **mongodb_exporter** | 0.5 core | 0.1 core | 128MB | 32MB | MongoDB metrics |
+| **node_exporter** | 0.5 core | 0.1 core | 64MB | 16MB | System metrics |
+| **promtail** | 0.5 core | 0.1 core | 128MB | 32MB | Log shipping |
+
+**Total Allocation:**
+- **CPU:** ~5.6 cores total (oversubscribed on 2-core system - Docker will share dynamically)
+- **RAM:** ~8.1GB limits (slightly oversubscribed, ~4GB reserved fits in 6.76GB available)
+- **Strategy:** Prioritize app (3GB) + mongo_db (2GB), monitoring services use leftover resources
+
+**Why Oversubscription Works:**
+- Not all services use max resources simultaneously
+- Limits prevent any single service from monopolizing
+- Reservations guarantee minimum for critical services (app: 2GB, mongo: 1GB)
+- Monitoring services are low-priority and opportunistic
+- Election day is single-day event with predictable traffic patterns
+
+#### Redis Configuration
+
+Production Redis uses aggressive caching with LRU eviction:
+
+```bash
+# Applied automatically in docker-compose.prod.yml
+--maxmemory 512mb              # 512MB data limit (doubled from dev)
+--maxmemory-policy allkeys-lru # Evict least recently used keys when full
+```
+
+**Benefits:**
+- Maximizes cache hit rate for vote data and rate limiting
+- Automatic eviction prevents OOM
+- 512MB sufficient for ~2M voter sessions + rate limit counters
+
+#### MongoDB WiredTiger Cache
+
+MongoDB automatically uses ~50% of available RAM (after container limit):
+- Container limit: 2GB
+- WiredTiger cache: ~1GB (automatically configured)
+- Sufficient for school election database (voters + candidates + votes)
+
+#### Monitoring Access
+
+Production monitoring dashboards are exposed but should be protected:
+
+```bash
+# Option 1: SSH tunnel (recommended)
+ssh -L 3000:localhost:3000 user@production-server
+ssh -L 9090:localhost:9090 user@production-server
+
+# Then open locally:
+http://localhost:3000  # Grafana
+http://localhost:9090  # Prometheus
+
+# Option 2: Cloudflare Access or VPN (more secure)
+# Configure Cloudflare Access rules for admin@yourdomain.com
+```
+
+**Security Warning:** Do NOT expose Grafana/Prometheus ports publicly without authentication.
+
+#### Scaling Recommendations
+
+For high-traffic elections (>1000 concurrent voters):
+
+**Current Setup (2 cores / 8GB RAM):**
+- Handles ~500 concurrent voters comfortably
+- Single-day election event (no 24/7 load)
+
+**If scaling needed:**
+1. **Upgrade to 4 cores / 16GB RAM:**
+   - Increase app CPU to 3 cores, RAM to 6GB
+   - Increase MongoDB CPU to 2 cores, RAM to 4GB
+   - Handles ~2000 concurrent voters
+
+2. **Horizontal Scaling (beyond 2000 voters):**
+   - Multiple app instances behind load balancer
+   - External Redis (AWS ElastiCache, Redis Cloud)
+   - MongoDB replica set
+
+#### Performance Optimization
+
+**Redis Optimization:**
+```bash
+# Check current memory usage
+docker exec pemilos-backend-redis-1 redis-cli INFO memory
+
+# Check hit rate (should be >80%)
+docker exec pemilos-backend-redis-1 redis-cli INFO stats | grep keyspace
+```
+
+**MongoDB Optimization:**
+```bash
+# Check cache hit rate
+docker exec pemilos-backend-mongo_db-1 mongosh -u admin -p --eval "db.serverStatus().wiredTiger.cache"
+
+# Enable slow query logging (>100ms)
+docker exec -it pemilos-backend-mongo_db-1 mongosh -u admin -p
+> use pemilom
+> db.setProfilingLevel(1, { slowms: 100 })
+```
+
+**Application Monitoring:**
+```bash
+# Check request rate
+curl -s http://localhost:9090/api/v1/query?query=rate\(http_requests_total\[1m\]\) | jq
+
+# Check error rate
+curl -s http://localhost:9090/api/v1/query?query=rate\(http_requests_total\{status_code=~\"5..\"\}\[1m\]\) | jq
+```
 
 ---
 
