@@ -35,6 +35,8 @@ services:
     volumes:
       - pemilos_mongo:/data/db
       - ./config/mongo:/docker-entrypoint-initdb.d
+    ports:
+      - "${MONGODB_PORT_EXTERNAL:-27017}:${MONGODB_PORT:-27017}"
     networks:
       - pemilos_network
     healthcheck:
