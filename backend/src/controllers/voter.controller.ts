@@ -108,7 +108,7 @@ export const uploadVoterFromCsv = asyncHandler(async (req, res) => {
       const stream = fs.createReadStream(filePath)
         .pipe(csv())
         .on("data", (data) => {
-          console.log(data)
+          logger.info({ rowData: { name: data.NAME, username: data.USERNAME, class: data.CLASS } }, 'CSV row parsed');
           
           try {
             // ⚠️ SECURITY: Validate all fields and reject CSV injection

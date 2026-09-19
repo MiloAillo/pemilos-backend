@@ -24,18 +24,18 @@ Schema -> Model -> Collection
  * Each user can cast votes for different election categories (OSIS, MPK).
  * 
  * Business Context:
- * - Users authenticate with NISN (username) and password
+ * - Users authenticate with NIS (username) and password
  * - Voters can participate in multiple election categories
  * - Admins manage candidates and monitor election progress
  * 
  * Security Considerations:
- * - Username (NISN) is unique to prevent duplicate accounts
+ * - Username (NIS) is unique to prevent duplicate accounts
  * - Password should be hashed before storage (handled in auth logic)
  * - Role-based access control via enum restricts administrative actions
  */
 const userSchema = new Schema({
       /**
-       * Username (NISN - Nomor Induk Siswa Nasional)
+       * Username (NIS - Nomor Induk Siswa)
        * 
        * Primary authentication credential for student voters.
        * Must be unique across the system to ensure one account per student.

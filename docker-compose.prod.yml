@@ -81,6 +81,10 @@ services:
     restart: unless-stopped
 
   promtail:
+    volumes:
+      - prod_logs:/app/logs:ro
+    environment:
+      - ENVIRONMENT=production
     restart: unless-stopped
 
 volumes:

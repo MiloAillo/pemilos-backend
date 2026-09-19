@@ -1045,6 +1045,47 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Monitoring",
+			"description": "System monitoring and metrics endpoints",
+			"item": [
+				{
+					"name": "Prometheus Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"followRedirects": true,
+						"disableUrlEncoding": false,
+						"disableCookies": false
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "User-Agent",
+								"value": "insomnia/10.0.0"
+							}
+						],
+						"url": "{{baseUrl}}/metrics",
+						"description": "Exposes Prometheus-compatible metrics monitoring. Includes HTTP request metrics, vote submission counters, system performance data. Used by Prometheus scrape application metrics 10 seconds.\n\n- `Validation: false`\n- `Metrics format: Prometheus text format`\n- `Refresh: Every scrape interval (10s)`\n\n**Response Example:**\n```\n# HELP http_requests_total Total number of HTTP requests\n# TYPE http_requests_total counter\nhttp_requests_total{method=\"GET\",route=\"/health\",status_code=\"200\"} 42\n\n# HELP votes_submitted_total Total votes submitted\n# TYPE votes_submitted_total counter\nvotes_submitted_total{label=\"osis\"} 150\nvotes_submitted_total{label=\"mpk\"} 148\n```"
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }
