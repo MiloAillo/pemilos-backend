@@ -3,11 +3,6 @@ global:
   evaluation_interval: 15s
   scrape_timeout: 10s
 
-# Retention: 7 days (saves ~300MB disk space vs 15 days default)
-storage:
-  tsdb:
-    retention.time: 7d
-
 scrape_configs:
   # System metrics from Node Exporter
   - job_name: node_exporter
