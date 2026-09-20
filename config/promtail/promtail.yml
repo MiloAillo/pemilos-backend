@@ -9,10 +9,38 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: access-log
+  # File-based logs (audit events, admin actions)
+  - job_name: pemilom-app-files
     static_configs:
       - targets:
           - localhost
         labels:
-          job: nginx
-          __path__: /var/log/nginx/access.log
+          job: pemilom
+          app: backend
+          environment: ${ENVIRONMENT:-dev}
+          log_type: file
+          __path__: /app/logs/*.log
+  
+  # Docker container stdout/stderr logs
+  - job_name: pemilom-app-stdout
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Only scrape containers with pemilos-backend-app in name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '.*pemilos-backend-app.*'
+        action: keep
+      # Set job label
+      - source_labels: ['__meta_docker_container_name']
+        target_label: job
+        replacement: pemilom
+      # Set container name label
+      - source_labels: ['__meta_docker_container_name']
+        target_label: container
+      # Set log type label
+      - target_label: log_type
+        replacement: stdout
+      # Set environment label
+      - target_label: environment
+        replacement: ${ENVIRONMENT:-dev}

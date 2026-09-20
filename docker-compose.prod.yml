@@ -1,0 +1,177 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.prod
+    environment:
+      - NODE_ENV=production
+      - APP_PORT=${APP_PORT}
+      - JWT_KEY=${JWT_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - TRUST_PROXY=${TRUST_PROXY}
+      - WINDOW_SIZE_IN_SECONDS=${WINDOW_SIZE_IN_SECONDS}
+      - MAX_REQUESTS=${MAX_REQUESTS}
+      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PUSHER_APPID=${PUSHER_APPID}
+      - PUSHER_KEY=${PUSHER_KEY}
+      - PUSHER_SECRET=${PUSHER_SECRET}
+      - PUSHER_CLUSTER=${PUSHER_CLUSTER}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'      # 1.5 cores (75% of 2 cores, leave 0.5 for system)
+          memory: 3G       # 3GB RAM for Node.js app (primary service)
+        reservations:
+          cpus: '1'        # Minimum 1 core guaranteed
+          memory: 2G       # Minimum 2GB RAM guaranteed
+    volumes:
+      - prod_logs:/app/logs
+      - prod_uploads:/app/uploads
+
+  mongo_db:
+    environment:
+      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - MONGODB_PORT_NUMBER=${MONGODB_PORT}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'        # 1 core for MongoDB (50% of total)
+          memory: 2G       # 2GB RAM for MongoDB (WiredTiger cache)
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  redis:
+    environment:
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'      # 0.5 core for Redis
+          memory: 768M     # 768MB RAM (512MB data + overhead)
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+
+  grafana:
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  prometheus:
+    restart: unless-stopped
+    environment:
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - NODE_EXPORTER_HOST=${NODE_EXPORTER_HOST}
+      - NODE_EXPORTER_PORT=${NODE_EXPORTER_PORT}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G       # Prometheus for 7-day retention
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+
+  loki:
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  mongodb_exporter:
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://${MONGODB_HOST}:${MONGODB_PORT}
+      - MONGODB_USER=${MONGODB_ROOT_USER}
+      - MONGODB_PASSWORD=${MONGODB_ROOT_PASSWORD}
+    ports:
+      - "9216:9216"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  redis_exporter:
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://${REDIS_HOST}:${REDIS_PORT}
+      - REDIS_USER=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+  node_exporter:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
+        reservations:
+          cpus: '0.1'
+          memory: 16M
+
+  promtail:
+    volumes:
+      - prod_logs:/app/logs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    environment:
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
+volumes:
+  prod_logs:
+  prod_uploads:

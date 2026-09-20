@@ -1,0 +1,88 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - APP_PORT=${APP_PORT}
+      - JWT_KEY=${JWT_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - TRUST_PROXY=${TRUST_PROXY}
+      - WINDOW_SIZE_IN_SECONDS=${WINDOW_SIZE_IN_SECONDS}
+      - MAX_REQUESTS=${MAX_REQUESTS}
+      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PUSHER_APPID=${PUSHER_APPID}
+      - PUSHER_KEY=${PUSHER_KEY}
+      - PUSHER_SECRET=${PUSHER_SECRET}
+      - PUSHER_CLUSTER=${PUSHER_CLUSTER}
+    volumes:
+      - ./backend/src:/app/src:ro
+      - dev_logs:/app/logs
+      - dev_uploads:/app/uploads
+
+  mongo_db:
+    environment:
+      - MONGODB_ROOT_USER=${MONGODB_ROOT_USER}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - MONGODB_PORT_NUMBER=${MONGODB_PORT}
+    ports:
+      - "27017:27017"
+
+  redis:
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+
+  grafana:
+    ports:
+      - "3000:3000"
+
+  prometheus:
+    environment:
+      - MONGODB_HOST=${MONGODB_HOST}
+      - MONGODB_PORT=${MONGODB_PORT}
+      - NODE_EXPORTER_HOST=${NODE_EXPORTER_HOST}
+      - NODE_EXPORTER_PORT=${NODE_EXPORTER_PORT}
+    ports:
+      - "9090:9090"
+
+  loki:
+    ports:
+      - "3100:3100"
+
+  mongodb_exporter:
+    environment:
+      - MONGODB_URI=mongodb://${MONGODB_HOST}:${MONGODB_PORT}
+      - MONGODB_USER=${MONGODB_ROOT_USER}
+      - MONGODB_PASSWORD=${MONGODB_ROOT_PASSWORD}
+    ports:
+      - "9216:9216"
+
+  redis_exporter:
+    environment:
+      - REDIS_ADDR=redis://${REDIS_HOST}:${REDIS_PORT}
+      - REDIS_USER=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+
+  promtail:
+    volumes:
+      - dev_logs:/app/logs:ro
+    environment:
+      - ENVIRONMENT=development
+      
+volumes:
+  dev_logs:
+  dev_uploads:

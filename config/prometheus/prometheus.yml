@@ -1,13 +1,27 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
 
 scrape_configs:
-  # sesuaikan host dan port sesuai yang ada di docker compose
-  # disarankan untuk tidak mengganti value `job_name` karena nanti akan ada misconfig pada grafana dashboard
-  # kalo dah dikasi tau jan ngeyel ya dek ya
+  # System metrics from Node Exporter
   - job_name: node_exporter
     static_configs:
       - targets: ["node_exporter:9100"]
+  
+  # MongoDB metrics
   - job_name: mongo
     static_configs:
       - targets: ["mongodb_exporter:9216"]
+  
+  # Redis metrics
+  - job_name: redis
+    static_configs:
+      - targets: ["redis_exporter:9121"]
+  
+  # Application metrics (HTTP, votes, latency)
+  - job_name: app
+    static_configs:
+      - targets: ["app:8000"]
+    metrics_path: /metrics
+    scrape_interval: 10s  # More frequent for real-time vote tracking

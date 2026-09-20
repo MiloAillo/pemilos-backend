@@ -1,7 +1,12 @@
 **/node_modules/
 **/dist/
+# Environment files
 .env
-.env.dev
+.env.prod
+.env.local
+.env.*.local
+
+# Keep .env.dev and .env.example committed
 redis.conf
 mongodb_data/
 pemilos-local/
