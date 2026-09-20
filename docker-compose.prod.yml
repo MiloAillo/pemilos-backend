@@ -127,6 +127,23 @@ services:
           cpus: '0.1'
           memory: 32M
 
+  redis_exporter:
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://${REDIS_HOST}:${REDIS_PORT}
+      - REDIS_USER=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
+
   node_exporter:
     restart: unless-stopped
     deploy:
@@ -141,6 +158,8 @@ services:
   promtail:
     volumes:
       - prod_logs:/app/logs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - ENVIRONMENT=production
     restart: unless-stopped

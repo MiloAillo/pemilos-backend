@@ -54,7 +54,8 @@ services:
       - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./config/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
       - ./config/grafana:/etc/grafana/provisioning/dashboards/json:ro
-      - ./config/grafana/app-dashboard.json:/etc/grafana/provisioning/dashboards/app/app-dashboard.json:ro
+    expose:
+      - 3000
     networks:
       - pemilos_network
 
@@ -85,6 +86,15 @@ services:
       - pemilos_network
     depends_on:
       - mongo_db
+
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    networks:
+      - pemilos_network
+    depends_on:
+      - redis
+    expose:
+      - 9121
 
   prometheus:
     image: prom/prometheus
@@ -118,6 +128,8 @@ services:
     command: -config.file=/etc/promtail/config.yml
     volumes:
       - ./config/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
     networks:
       - pemilos_network
 
