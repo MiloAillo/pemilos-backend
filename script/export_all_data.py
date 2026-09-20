@@ -62,6 +62,9 @@ for i, v in enumerate(classOptions):
 
 df = pd.DataFrame(data)
 
-df.to_excel('voters.xlsx', index=False)
+df = df[['name', 'username', 'class', 'password']]
 
-print("Saved to voters.xlsx successfully!")
+df.to_excel('voters.xlsx', index=False)
+df.to_csv('voters.csv', index=False)
+
+print("Saved to voters.xlsx and voters.csv successfully!")
