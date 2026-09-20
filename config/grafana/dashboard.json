@@ -52,7 +52,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(pemilom_votes_total) or vector(0)",
+          "expr": "sum(votes_submitted_total) or vector(0)",
           "instant": false,
           "refId": "A"
         }
@@ -91,7 +91,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(pemilom_votes_total{candidate_type=\"osis\"}) or vector(0)",
+          "expr": "sum(votes_submitted_total{label=\"osis\"}) or vector(0)",
           "instant": false,
           "refId": "A"
         }
@@ -130,7 +130,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(pemilom_votes_total{candidate_type=\"mpk\"}) or vector(0)",
+          "expr": "sum(votes_submitted_total{label=\"mpk\"}) or vector(0)",
           "instant": false,
           "refId": "A"
         }
@@ -171,7 +171,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(pemilom_active_users) or vector(0)",
+          "expr": "sum(authenticated_users_active) or vector(0)",
           "instant": false,
           "refId": "A"
         }
@@ -212,7 +212,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(rate(pemilom_votes_total[1m])) * 60 or vector(0)",
+          "expr": "sum(rate(votes_submitted_total[1m])) * 60 or vector(0)",
           "instant": false,
           "refId": "A"
         }
