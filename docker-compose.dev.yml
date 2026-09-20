@@ -69,6 +69,14 @@ services:
     ports:
       - "9216:9216"
 
+  redis_exporter:
+    environment:
+      - REDIS_ADDR=redis://${REDIS_HOST}:${REDIS_PORT}
+      - REDIS_USER=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+
   promtail:
     volumes:
       - dev_logs:/app/logs:ro
