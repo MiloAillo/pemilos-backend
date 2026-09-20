@@ -413,7 +413,7 @@
       "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
       "id": 9,
       "options": {
-        "displayLabels": ["percent"],
+        "displayLabels": [],
         "legend": {"displayMode": "table", "placement": "right", "showLegend": true, "values": ["value", "percent"]},
         "pieType": "donut",
         "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
@@ -661,9 +661,15 @@
           "targets": [
             {
               "editorMode": "code",
-              "expr": "mongodb_op_latencies_latency_total / mongodb_op_latencies_ops_total",
-              "legendFormat": "{{type}}",
+              "expr": "rate(mongodb_collstats_latencyStats_reads_latency[1m]) / rate(mongodb_collstats_latencyStats_reads_ops[1m])",
+              "legendFormat": "reads {{collection}}",
               "refId": "A"
+            },
+            {
+              "editorMode": "code",
+              "expr": "rate(mongodb_collstats_latencyStats_writes_latency[1m]) / rate(mongodb_collstats_latencyStats_writes_ops[1m])",
+              "legendFormat": "writes {{collection}}",
+              "refId": "B"
             }
           ],
           "title": "MongoDB Query Latency",
@@ -721,44 +727,44 @@
         },
         {
           "datasource": {"type": "prometheus", "uid": "prometheus"},
-          "description": "Redis memory usage percentage",
+          "description": "Redis memory usage",
           "fieldConfig": {
             "defaults": {
               "color": {"mode": "thresholds"},
               "mappings": [],
-              "max": 100,
-              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
                   {"color": "green", "value": null},
-                  {"color": "yellow", "value": 70},
-                  {"color": "red", "value": 85}
+                  {"color": "yellow", "value": 100000000},
+                  {"color": "red", "value": 400000000}
                 ]
               },
-              "unit": "percent"
+              "unit": "bytes"
             },
             "overrides": []
           },
           "gridPos": {"h": 8, "w": 6, "x": 12, "y": 33},
           "id": 16,
           "options": {
-            "orientation": "auto",
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "vertical",
             "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true
+            "textMode": "auto"
           },
           "pluginVersion": "10.1.1",
           "targets": [
             {
               "editorMode": "code",
-              "expr": "(redis_memory_used_bytes / redis_memory_max_bytes) * 100",
+              "expr": "redis_memory_used_bytes",
               "instant": false,
               "refId": "A"
             }
           ],
-          "title": "Redis Memory Usage %",
-          "type": "gauge"
+          "title": "Redis Memory Used",
+          "type": "stat"
         },
         {
           "datasource": {"type": "prometheus", "uid": "prometheus"},
@@ -778,7 +784,7 @@
             "colorMode": "value",
             "graphMode": "area",
             "justifyMode": "auto",
-            "orientation": "horizontal",
+            "orientation": "vertical",
             "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
             "textMode": "auto"
           },
@@ -1095,7 +1101,7 @@
             "colorMode": "value",
             "graphMode": "area",
             "justifyMode": "auto",
-            "orientation": "horizontal",
+            "orientation": "vertical",
             "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
             "textMode": "auto"
           },
@@ -1134,7 +1140,7 @@
             "justifyMode": "center",
             "orientation": "horizontal",
             "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
-            "textMode": "value_and_name"
+            "textMode": "value"
           },
           "pluginVersion": "10.1.1",
           "targets": [
